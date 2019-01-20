@@ -1,6 +1,7 @@
 import cv2
 import numpy as np
 import sys
+import math
 
 def convert_color_space_BGR_to_RGB(img_BGR):
     img_RGB = np.zeros_like(img_BGR,dtype=np.float32)
@@ -25,9 +26,18 @@ def convert_color_space_RGB_to_Lab(img_RGB):
     '''
     img_LMS = np.zeros_like(img_RGB,dtype=np.float32)
     # to be completed ...
+    LMStoRGB = np.array([[0.3811,0.5783,0.0402],[0.1967,0.7244,0.0782],[0.0241,0.1288,0.8444]])
+    img_LMS = np.matmul(img_RGB,LMStoRGB)
+    #print(img_LMS)
 
+    img_LMS = np.log10(img_LMS)
+    
     img_Lab = np.zeros_like(img_RGB,dtype=np.float32)
-    # to be completed ...
+    matrix1 = [[1/math.sqrt(3),0,0],[0,1/math.sqrt(6),0],[0,0,1/math.sqrt(2)]]
+    print(matrix1)
+    
+    
+    
     return img_Lab
 
 def convert_color_space_Lab_to_RGB(img_Lab):
@@ -64,8 +74,10 @@ def color_transfer_in_Lab(img_RGB_source, img_RGB_target):
     print('===== color_transfer_in_Lab =====')
     # to be completed ...
     new_rgb_img = convert_color_space_BGR_to_RGB(img_RGB_source)
-    print(new_rgb_img)
     
+    img_Lab= convert_color_space_RGB_to_Lab(new_rgb_img)
+
+
 
 def color_transfer_in_RGB(img_RGB_source, img_RGB_target):
     print('===== color_transfer_in_RGB =====')
@@ -98,7 +110,7 @@ if __name__ == "__main__":
     # ===== read input images
     img_RGB_source = cv2.imread(path_file_image_source) #is the image you want to change the its color
     img_RGB_target = cv2.imread(path_file_image_target) #is the image containing the color distribution that you want to change the img_RGB_source to (transfer color of the img_RGB_target to the img_RGB_source)
-    img_RGB_new_Lab       = color_transfer(img_RGB_source, img_RGB_target, option='in_Lab')
+    img_RGB_new_Lab = color_transfer(img_RGB_source, img_RGB_target, option='in_Lab')
     # todo: save image to path_file_image_result_in_Lab
 
     #img_RGB_new_RGB       = color_transfer(img_RGB_source, img_RGB_target, option='in_RGB')
