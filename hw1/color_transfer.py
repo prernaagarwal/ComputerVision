@@ -82,7 +82,7 @@ def color_transfer_in_Lab(img_RGB_source, img_RGB_target):
     print('===== color_transfer_in_Lab =====')
     # to be completed ...
     new_rgb_img = convert_color_space_BGR_to_RGB(img_RGB_source)
-    target_rgb = convert_color_space_BGR_to_RGB(img_RGB_source)
+    target_rgb = convert_color_space_BGR_to_RGB(img_RGB_target)
     
     new_img_Lab = convert_color_space_RGB_to_Lab(new_rgb_img)
    
@@ -93,6 +93,8 @@ def color_transfer_in_Lab(img_RGB_source, img_RGB_target):
     target_std =  np.std(target_rgb, axis=0)
     
     labdash = target_std/lab_src_std *labstar
+
+    #lablog10 = np.log10(labdash) 
 
     final_rgb_img = convert_color_space_Lab_to_RGB(labdash)
 
@@ -131,7 +133,7 @@ if __name__ == "__main__":
     img_RGB_source = cv2.imread(path_file_image_source) #is the image you want to change the its color
     img_RGB_target = cv2.imread(path_file_image_target) #is the image containing the color distribution that you want to change the img_RGB_source to (transfer color of the img_RGB_target to the img_RGB_source)
     img_RGB_new_Lab = color_transfer(img_RGB_source, img_RGB_target, option='in_Lab')
-    cv2.imwrite('my_result.png',img_RGB_new_Lab)
+    cv2.imwrite('result_in_Lab.png',img_RGB_new_Lab)
     # todo: save image to path_file_image_result_in_Lab
 
     #img_RGB_new_RGB       = color_transfer(img_RGB_source, img_RGB_target, option='in_RGB')
