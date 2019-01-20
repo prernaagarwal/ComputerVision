@@ -85,6 +85,11 @@ def color_transfer_in_Lab(img_RGB_source, img_RGB_target):
     
     new_img_Lab = convert_color_space_RGB_to_Lab(new_rgb_img)
    
+
+    labstar = new_img_Lab - np.mean(new_img_Lab,axis=0)
+
+
+
     final_rgb_img = convert_color_space_Lab_to_RGB(new_img_Lab)
 
     return final_rgb_img
