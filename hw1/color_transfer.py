@@ -82,15 +82,19 @@ def color_transfer_in_Lab(img_RGB_source, img_RGB_target):
     print('===== color_transfer_in_Lab =====')
     # to be completed ...
     new_rgb_img = convert_color_space_BGR_to_RGB(img_RGB_source)
+    target_rgb = convert_color_space_BGR_to_RGB(img_RGB_source)
     
     new_img_Lab = convert_color_space_RGB_to_Lab(new_rgb_img)
    
 
     labstar = new_img_Lab - np.mean(new_img_Lab,axis=0)
 
+    lab_src_std =  np.std(new_img_Lab, axis=0)
+    target_std =  np.std(target_rgb, axis=0)
+    
+    labdash = target_std/lab_src_std *labstar
 
-
-    final_rgb_img = convert_color_space_Lab_to_RGB(new_img_Lab)
+    final_rgb_img = convert_color_space_Lab_to_RGB(labdash)
 
     return final_rgb_img
 
