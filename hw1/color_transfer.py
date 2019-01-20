@@ -45,7 +45,6 @@ def convert_color_space_Lab_to_RGB(img_Lab):
     convert image color space Lab to RGB
     '''
     img_LMS = np.zeros_like(img_Lab,dtype=np.float32)
-    # to be completed ...
 
     matrix1 = [[1,1,1],[1,1,-1],[1,-2,0]]
     matrix2 = [[1/math.sqrt(3),0,0],[0,1/math.sqrt(6),0],[0,0,1/math.sqrt(2)]]
@@ -53,10 +52,10 @@ def convert_color_space_Lab_to_RGB(img_Lab):
     img_LMS = np.matmul(img_Lab, matrix3) 
 
 
-
-
     img_RGB = np.zeros_like(img_Lab,dtype=np.float32)
-    # to be completed ...
+
+    matrix4 = [[4.4679, -3.5873, 0.1193],[-1.2186,2.3809,-0.1624],[0.0497, -0.2439, 1.2045]]
+    img_RGB = np.matmul(img_LMS, matrix4)
 
     return img_RGB
 
