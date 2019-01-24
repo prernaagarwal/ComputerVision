@@ -1,3 +1,13 @@
+# Prerna Agarwal
+# Computer Vision CS410
+# HW1, version 2
+# Based on Color Transfer between Images research paper
+# Kindly refer to the equations from the research paper
+# mentioned above.
+
+# Note: In this program I tried to make the matrix multiplication correct for RGB to LAB.
+# Getting a very huge RMSE i.e., not correct results.
+
 import cv2
 import numpy as np
 import sys
