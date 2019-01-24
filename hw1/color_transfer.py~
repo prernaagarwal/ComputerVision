@@ -33,12 +33,33 @@ def convert_color_space_RGB_to_Lab(img_RGB):
     '''
     img_LMS = np.zeros_like(img_RGB,dtype=np.float32)
    
+############################
     LMStoRGB = np.array([[0.3811,0.5783,0.0402],[0.1967,0.7244,0.0782],[0.0241,0.1288,0.8444]])
     img_LMS = np.matmul(img_RGB,LMStoRGB)
     #print(img_LMS)
 
     img_LMS = np.log10(img_LMS)
+#############################
+    """  
+    R = img_RGB[:,:,0]
+    G = img_RGB[:,:,1]
+    B = img_RGB[:,:,2]
 
+    L = 0.3811*R+0.5783*G+0.0402*B
+    M = 0.1967*R+0.7244*G+0.0782*B
+    S = 0.0241*R+0.1288*G+0.8444*B
+    L = img_LMS[:,:,0]    
+    M = img_LMS[:,:,0]    
+    S = img_LMS[:,:,0]    
+
+    L = np.log10(L)
+    M = np.log10(M)
+    S = np.log10(S)
+    
+    img_LMS[:,:,0] = L
+    img_LMS[:,:,1] = M
+    img_LMS[:,:,2] = S
+    """
     img_Lab = np.zeros_like(img_RGB,dtype=np.float32)
     matrix1 = [[1/math.sqrt(3),0,0],[0,1/math.sqrt(6),0],[0,0,1/math.sqrt(2)]]
     matrix2 = [[1,1,1],[1,1,-2],[1,-1,0]]
@@ -105,7 +126,7 @@ def color_transfer_in_Lab(img_RGB_source, img_RGB_target):
     l = new_src_img_Lab[:,:,0]
     a = new_src_img_Lab[:,:,1]
     b = new_src_img_Lab[:,:,2]
-    print(l.shape)    
+    
     l_tar = new_tar_img_Lab[:,:,0]
     a_tar = new_tar_img_Lab[:,:,1]
     b_tar = new_tar_img_Lab[:,:,2]
@@ -113,7 +134,8 @@ def color_transfer_in_Lab(img_RGB_source, img_RGB_target):
     lmean = np.mean(l)
     amean = np.mean(a)
     bmean = np.mean(b)
-    print(lmean.shape)
+
+    print(lmean)
 
     tar_lmean = np.mean(l_tar)
     tar_amean = np.mean(a_tar)
@@ -137,9 +159,9 @@ def color_transfer_in_Lab(img_RGB_source, img_RGB_target):
     #src_std =  np.std(new_src_img_Lab, axis=(0,1))
     #target_std =  np.std(new_tar_img_Lab, axis=(0,1))
 
-    ldash1 = (tar_l_std/src_l_std) * lstar_src
-    adash1 = (tar_a_std/src_a_std) * astar_src
-    bdash1 = (tar_b_std/src_b_std) * bstar_src
+    ldash1 = tar_l_std/src_l_std * lstar_src
+    adash1 = tar_a_std/src_a_std * astar_src
+    bdash1 = tar_b_std/src_b_std * bstar_src
 
     #labdash = target_std/src_std *labstar
     #mean_target = np.mean(new_tar_img_Lab, axis = (0,1))
@@ -151,6 +173,24 @@ def color_transfer_in_Lab(img_RGB_source, img_RGB_target):
 
 
 ##########################################################
+    """
+    lstar_tar = l_tar - tar_lmean 
+    astar_tar = a_tar - tar_amean 
+    bstar_tar = b_tar - tar_bmean 
+
+    ldash2 = tar_l_std/src_l_std * lstar_tar
+    adash2 = tar_a_std/src_a_std * astar_tar
+    bdash2 = tar_b_std/src_b_std * bstar_tar
+    
+    
+    ldash_new = ldash2 + lmean
+    adash_new = adash2 + amean
+    bdash_new = bdash2 + bmean
+    print(lstar_tar.shape)
+    print(ldash_new.shape)
+
+    combined_LAB = cv2.merge([ldash_new, adash_new, bdash_new])
+    """
 
     combined_LAB[:,:,0] = ldash_new
     combined_LAB[:,:,1] = adash_new
@@ -187,22 +227,22 @@ if __name__ == "__main__":
 
     path_file_image_source = sys.argv[1]
     path_file_image_target = sys.argv[2]
-    path_file_image_result_in_Lab = sys.argv[3]
+    result = sys.argv[3]
+ #   path_file_image_result_in_Lab = sys.argv[3]
  #   path_file_image_result_in_RGB = sys.argv[4]
  #   path_file_image_result_in_CIECAM97s = sys.argv[5]
 
     # ===== read input images
-    img_RGB_source = cv2.imread(path_file_image_source).astype(np.float32) #is the image you want to change the its color
-    img_RGB_target = cv2.imread(path_file_image_target).astype(np.float32) #is the image containing the color distribution that you want to change the img_RGB_source to (transfer color of the img_RGB_target to the img_RGB_source)
-    
-
-    rimage = cv2.imread(path_file_image_result_in_Lab).astype(np.float32)
+    img_RGB_source = cv2.imread(path_file_image_source).astype(np.float32)/255.0 #is the image you want to change the its color
+    img_RGB_target = cv2.imread(path_file_image_target).astype(np.float32)/255.0 #is the image containing the color distribution that you want to change the img_RGB_source to (transfer color of the img_RGB_target to the img_RGB_source)
+    rimage = cv2.imread(result).astype(np.float32)
     
 
 
 
     img_BGR = color_transfer(img_RGB_source, img_RGB_target, option='in_Lab')
-    img_BGR = np.uint8(np.clip(img_BGR,0,255))
+    img_BGR = img_BGR*255
+    img_BGR = np.clip(img_BGR,0,255)
     print(np.max(img_BGR))
     print("RMSE:", np.sqrt((img_BGR - rimage)**2).mean())
     cv2.imwrite('path_file_image_result_in_Lab.png', img_BGR)
