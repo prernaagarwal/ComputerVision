@@ -280,8 +280,8 @@ if __name__ == "__main__":
 
 
 
-#    img_BGR = color_transfer(img_RGB_source, img_RGB_target, option='in_Lab')
-    img_BGR = color_transfer(img_RGB_source, img_RGB_target, option='in_CIECAM97s')
+    img_BGR = color_transfer(img_RGB_source, img_RGB_target, option='in_Lab')
+    #img_BGR = color_transfer(img_RGB_source, img_RGB_target, option='in_CIECAM97s')
     img_BGR = np.uint8(np.clip(img_BGR,0,255))
     print(np.max(img_BGR))
     print("RMSE:", np.sqrt((img_BGR - rimage)**2).mean())
