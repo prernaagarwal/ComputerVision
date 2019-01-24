@@ -401,10 +401,6 @@ if __name__ == "__main__":
     img_RGB_new_RGB = color_transfer(img_RGB_source, img_RGB_target, option='in_RGB')
     img_RGB_new_RGB = np.uint8(np.clip(img_RGB_new_RGB,0,255))
 
-    #find max value and RMSE error between my result and given result
-    #print(np.max(img_RGB_new_RGB))
-    print("RMSE:", np.sqrt((img_RGB_new_RGB - result_image)**2).mean())
-    
     # todo: save image to path_file_image_result_in_RGB
     cv2.imwrite(path_file_image_result_in_RGB, img_RGB_new_RGB)
     ###############################################
@@ -414,10 +410,6 @@ if __name__ == "__main__":
     img_RGB_new_CIECAM97s = color_transfer(img_RGB_source, img_RGB_target, option='in_CIECAM97s')
     img_RGB_new_CIECAM97s = np.uint8(np.clip(img_RGB_new_CIECAM97s,0,255))
 
-    #find max value and RMSE error between my result and given result
-    #print(np.max(img_RGB_new_CIECAM97s))
-    print("RMSE:", np.sqrt((img_RGB_new_CIECAM97s - result_image)**2).mean())
-    
     # todo: save image to path_file_image_result_in_CIECAM97s
     cv2.imwrite(path_file_image_result_in_CIECAM97s, img_RGB_new_CIECAM97s)
     ###############################################
