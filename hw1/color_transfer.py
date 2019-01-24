@@ -58,7 +58,7 @@ def convert_color_space_RGB_to_Lab(img_RGB):
     for i in range(row):
         for j in range(col):
             RGBm = img_RGB[i,j]                 #each [i,j] has RGB values
-            LMSm = np.matmul(constm1, RGBm)     #get LSM color from equation((4)
+            LMSm = np.matmul(constm1, RGBm)     #get LMS color from equation((4)
             LMSlog = np.log10(LMSm)             #convert to logarithmic space to remove skew
 
             LAB = np.matmul(constm4,LMSlog)     #get Lab from equation(6)
@@ -82,11 +82,11 @@ def convert_color_space_Lab_to_RGB(img_Lab):
     #matrix from equation(9)
     constm4 = [[4.4679, -3.5873, 0.1193],[-1.2186,2.3809,-0.1624],[0.0497, -0.2439, 1.2045]]
     
-    row,col,depth = img_RGB.shape               #row = 599, col = 599, depth = 3
+    row,col,depth = img_RGB.shape               #row = 599, col = 800, depth = 3
     for i in range(row):
         for j in range(col):
             Labm  = img_Lab[i,j]                #each [i,j] has LAB values
-            LMSm = np.matmul(constm3, Labm)     #get LSM from equation(8)
+            LMSm = np.matmul(constm3, Labm)     #get LMS from equation(8)
             LMS10 = np.power(10,LMSm)           #convert to linear space
 
             RGB = np.matmul(constm4,LMS10)      #get RGB from equation(9)
@@ -103,14 +103,14 @@ def convert_color_space_RGB_to_CIECAM97s(img_RGB):
     constm1 = np.array([[0.3811,0.5783,0.0402],[0.1967,0.7244,0.0782],[0.0241,0.1288,0.8444]])
     constm2 = [[2.00,1.00,0.05],[1.00,-1.09,0.09],[0.11,0.11,-0.22]]
 
-    row,col,depth = img_RGB.shape
+    row,col,depth = img_RGB.shape               #row = 599, col = 800, depth = 3
     for i in range(row):
         for j in range(col):
-            RGBm = img_RGB[i,j]
-            LMSm = np.matmul(constm1, RGBm)
+            RGBm = img_RGB[i,j]                 #each [i,j] has RGB values
+            LMSm = np.matmul(constm1, RGBm)     #get LMS from equation(4)
 
-            CAM = np.matmul(constm2,LMSm)
-            img_CIECAM97s[i,j] = CAM
+            CAM = np.matmul(constm2,LMSm)       #get CIECAM97s from equation on page 39
+            img_CIECAM97s[i,j] = CAM            #store that CIECAM97s value for the RGB value at [i,j]
 
 
     return img_CIECAM97s
@@ -122,19 +122,18 @@ def convert_color_space_CIECAM97s_to_RGB(img_CIECAM97s):
     img_RGB = np.zeros_like(img_CIECAM97s,dtype=np.float32)
 
 
-    constm1 = [[1,1,1],[1,1,-1],[1,-2,0]]
-    constm2 = [[np.sqrt(3)/3.0,0,0],[0,np.sqrt(6)/6.0,0],[0,0,np.sqrt(2)/2.0]]
-    constm3 = np.matmul(constm1,constm2)
-    constm4 = [[4.4679, -3.5873, 0.1193],[-1.2186,2.3809,-0.1624],[0.0497, -0.2439, 1.2045]]
+    constm1 = [[2.00,1.00,0.05],[1.00,-1.09,0.09],[0.11,0.11,-0.22]]
+    constm2 = np.linalg.inv(constm1)            #inverse of constm1
+    constm3 = [[4.4679, -3.5873, 0.1193],[-1.2186,2.3809,-0.1624],[0.0497, -0.2439, 1.2045]]
     
-    row,col,depth = img_CIECAM97s.shape
-    for i in range(row):
-        for j in range(col):
-            CAMm  = img_CIECAM97s[i,j]
-            LMSm = np.matmul(constm3, CAMm)
+    row,col,depth = img_CIECAM97s.shape         #row = 599, col = 800, depth = 3
+    for i in range(row):    
+        for j in range(col):    
+            CAMm  = img_CIECAM97s[i,j]          #each [i,j] has CIECAM97s values
+            LMSm = np.matmul(constm2, CAMm)     #get LMS by taking inverse of equation on page 39
 
-            RGB = np.matmul(constm4,LMSm)
-            img_RGB[i,j] = RGB
+            RGB = np.matmul(constm3,LMSm)       #get RGB from equation 9
+            img_RGB[i,j] = RGB                  #store that RGB value for the CIECAM97s value at [i,j]
 
     return img_RGB
 
@@ -383,7 +382,6 @@ if __name__ == "__main__":
     result_image = cv2.imread(path_file_image_given_result).astype(np.float32)
     
 
-
     ############### LAB #############################
     img_RGB_new_Lab = color_transfer(img_RGB_source, img_RGB_target, option='in_Lab')
     img_RGB_new_Lab = np.uint8(np.clip(img_RGB_new_Lab,0,255))
@@ -404,7 +402,6 @@ if __name__ == "__main__":
     # todo: save image to path_file_image_result_in_RGB
     cv2.imwrite(path_file_image_result_in_RGB, img_RGB_new_RGB)
     ###############################################
-
 
     ############## CIECAM97s #######################    
     img_RGB_new_CIECAM97s = color_transfer(img_RGB_source, img_RGB_target, option='in_CIECAM97s')
