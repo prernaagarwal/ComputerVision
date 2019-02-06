@@ -372,14 +372,14 @@ if __name__ == "__main__":
     path_file_image_result_in_RGB = sys.argv[4]         #store my RGB result
     path_file_image_result_in_CIECAM97s = sys.argv[5]   #store my CIECAM97s result
 
-    path_file_image_given_result = sys.argv[6]          #store the given result
+#    path_file_image_given_result = sys.argv[6]          #store the given result
 
     # ===== read input images =====#
     img_RGB_source = cv2.imread(path_file_image_source).astype(np.float32) #is the image you want to change the its color
     img_RGB_target = cv2.imread(path_file_image_target).astype(np.float32) #is the image containing the color distribution that you want to change the img_RGB_source to (transfer color of the img_RGB_target to the img_RGB_source)
     
     # ==== read given result image ====#
-    result_image = cv2.imread(path_file_image_given_result).astype(np.float32)
+#    result_image = cv2.imread(path_file_image_given_result).astype(np.float32)
     
 
     ############### LAB #############################
@@ -388,7 +388,7 @@ if __name__ == "__main__":
 
     #find max value and RMSE error between my result and given result
     #print(np.max(img_RGB_new_Lab))
-    print("RMSE:", np.sqrt((img_RGB_new_Lab - result_image)**2).mean())
+    #print("RMSE:", np.sqrt((img_RGB_new_Lab - result_image)**2).mean())
     
     # todo: save image to path_file_image_result_in_Lab
     cv2.imwrite(path_file_image_result_in_Lab, img_RGB_new_Lab)
