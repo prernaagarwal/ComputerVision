@@ -1,4 +1,4 @@
-import cv2
+import cv2 
 import sys
 import numpy as np
 
@@ -30,6 +30,17 @@ def ex_extract_and_match_feature(img_1, img_2, ratio_robustness=0.7):
     # ==============================
     # ===== 1/ extract features from input image 1 and image 2
     # ==============================
+    
+    sift = cv2.xfeatures2d.SIFT_create()
+    kp = sift.detect(img_1,None)
+    img1=cv2.drawKeypoints(img_1,kp,img_1)
+    cv2.imwrite('kp_im1.jpg',img1)
+
+    
+    sift = cv2.xfeatures2d.SIFT_create()
+    kp = sift.detect(img_2,None)
+    img2=cv2.drawKeypoints(img_1,kp,img_2)
+    cv2.imwrite('kp_im2.jpg',img2)
 
     # ==============================
     # ===== 2/ use bruteforce search to find a list of pairs of matched feature points
@@ -103,5 +114,5 @@ if __name__ == "__main__":
     img_panorama = stitch_images(img_1=img_1, img_2=img_2)
 
     # ===== save panorama image
-    cv2.imwrite(filename=path_file_image_result, img=(img_panorama).clip(0.0, 255.0).astype(np.uint8))
+    #cv2.imwrite(filename=path_file_image_result, img=(img_panorama).clip(0.0, 255.0).astype(np.uint8))
 
