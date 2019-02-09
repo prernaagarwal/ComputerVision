@@ -16,17 +16,21 @@ def ex_find_homography_ransac(list_pairs_matched_keypoints, threshold_ratio_inli
     best_H = None
 
     # to be completed ...
-    
+    """
+    new_list = []
     for pair in list_pairs_matched_keypoints:
         pt1 = pair[0]
         pt1.append(1)
         pt2 = pair[1]
         pt2.append(1)
-    
+        new_pair = []
+        new_pair.append(pt1)
+        new_pair.append(pt2)
+        new_list.append(new_pair)
+    #print(new_list)
+    """
     A = []
     points4 = []
-    listH = []
-    otherH= []
     for i in range(4):
         index = randint(0,len(list_pairs_matched_keypoints)-1)
         points4.append(list_pairs_matched_keypoints[index])
@@ -37,43 +41,23 @@ def ex_find_homography_ransac(list_pairs_matched_keypoints, threshold_ratio_inli
 
         A.append([ x, y, 1, 0, 0, 0, -u*x, -u*y, -u ])
         A.append([ 0, 0, 0, x, y, 1, -v*x, -v*y, -v ])
+    #print(points4)
+    #print(A)
     A = np.asarray(A)
     #AH=0
     U,S,V = np.linalg.svd(A)
+    #print(U.shape, S.shape, V.shape)
+    #print(S)
     last = V[-1,:]
+    #print(last)
     H = last.reshape(3,3)
-    
-    inliers = []
-    for point_pair in list_pairs_matched_keypoints:
-        p1 = np.asarray(point_pair[0])
-        p2 = np.asarray(point_pair[1])
-        projected_p2 = np.dot(H, p1) 
-        projected_p2 /=projected_p2[2]
-        #print(projected_p2)
-        error = np.linalg.norm(projected_p2-p2)
-        if (error < threshold_reprojtion_error):
-           inliers.append(point_pair) 
-
-    otherH.append(H)
-    otherH.append(len(inliers)/len(list_pairs_matched_keypoinys))
-    listH.append(otherH)
-
-    inlier_error = []
-    if (len(inliers) / len(list_pairs_matched_keypoints) > threshold_ratio_inliers):
-        
-        for point in inliers:  #point = [[x1,y1,1],[x2,y2,1]]
-            p1 = np.asarray(point[0])
-            p2 = np.asarray(point[1])
-            proj_p2 = np.dot(H, p1)
-            proj_p2 /= proj_p2[2]
-            inlier_error.append(np.linalg.norm(proj_p2 - p2))
-
-        best_H = H
+    print(H)
+    print(np.sum(np.dot(A,last)))
 
 
-    if (best_H is None):
-        listH.sort(key = lambda x: x[1])
-        bestH = listH[0][0]
+
+
+
 
     return best_H
 
