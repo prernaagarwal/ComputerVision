@@ -2,7 +2,7 @@ import cv2
 import sys
 import numpy as np
 from random import randint
-
+import matplotlib.pyplot as plt
 
 def ex_find_homography_ransac(list_pairs_matched_keypoints, threshold_ratio_inliers=0.85, threshold_reprojtion_error=3, max_num_trial=1000):
     '''
@@ -15,66 +15,98 @@ def ex_find_homography_ransac(list_pairs_matched_keypoints, threshold_ratio_inli
     '''
     best_H = None
 
-    # to be completed ...
-    
+    print("len list_pairs_matched_keyponts: ",len(list_pairs_matched_keypoints))
     for pair in list_pairs_matched_keypoints:
         pt1 = pair[0]
         pt1.append(1)
         pt2 = pair[1]
         pt2.append(1)
     
-    A = []
-    points4 = []
+    #### 1000 times
+
+    max_inliers = 0
     listH = []
-    otherH= []
-    for i in range(4):
-        index = randint(0,len(list_pairs_matched_keypoints)-1)
-        points4.append(list_pairs_matched_keypoints[index])
-        x = points4[i][0][0]
-        y = points4[i][0][1]
-        u = points4[i][1][0]
-        v = points4[i][1][1]
+    for num in range(0,max_num_trial):
 
-        A.append([ x, y, 1, 0, 0, 0, -u*x, -u*y, -u ])
-        A.append([ 0, 0, 0, x, y, 1, -v*x, -v*y, -v ])
-    A = np.asarray(A)
-    #AH=0
-    U,S,V = np.linalg.svd(A)
-    last = V[-1,:]
-    H = last.reshape(3,3)
-    
-    inliers = []
-    for point_pair in list_pairs_matched_keypoints:
-        p1 = np.asarray(point_pair[0])
-        p2 = np.asarray(point_pair[1])
-        projected_p2 = np.dot(H, p1) 
-        projected_p2 /=projected_p2[2]
-        #print(projected_p2)
-        error = np.linalg.norm(projected_p2-p2)
-        if (error < threshold_reprojtion_error):
-           inliers.append(point_pair) 
-
-    otherH.append(H)
-    otherH.append(len(inliers)/len(list_pairs_matched_keypoinys))
-    listH.append(otherH)
-
-    inlier_error = []
-    if (len(inliers) / len(list_pairs_matched_keypoints) > threshold_ratio_inliers):
+        A = []
+        points4 = []
+        otherH= []
+        #Step 1: Randomly select a seed group of matches
+        for i in range(4):
+            index = randint(0,len(list_pairs_matched_keypoints)-1)
+            points4.append(list_pairs_matched_keypoints[index])
+            x = points4[i][0][0]
+            y = points4[i][0][1]
+            u = points4[i][1][0]
+            v = points4[i][1][1]
+            
+            A.append([ x, y, 1, 0, 0, 0, -u*x, -u*y, -u ])
+            A.append([ 0, 0, 0, x, y, 1, -v*x, -v*y, -v ])
+        A = np.asarray(A)
+        #AH=0
+        #Step 2: Compute transformation from seed group
+        U,S,V = np.linalg.svd(A)
+        last = V[-1,:]
+        H = last.reshape(3,3)
+      
         
-        for point in inliers:  #point = [[x1,y1,1],[x2,y2,1]]
-            p1 = np.asarray(point[0])
-            p2 = np.asarray(point[1])
-            proj_p2 = np.dot(H, p1)
-            proj_p2 /= proj_p2[2]
-            inlier_error.append(np.linalg.norm(proj_p2 - p2))
 
-        best_H = H
+        #Step 3: Find inliers to this transformation 
+        inliers = []
+        for point_pair in list_pairs_matched_keypoints:
+            p1 = np.asarray(point_pair[0])
+            p2 = np.asarray(point_pair[1])
+            projected_p2 = np.dot(H, p1) 
+            projected_p2 /=projected_p2[2]
+            #print(projected_p2)
+            error = np.linalg.norm(projected_p2-p2)
+            if (error < threshold_reprojtion_error):
+                inliers.append(point_pair) 
 
+        otherH.append(H)
+        otherH.append(len(inliers)/len(list_pairs_matched_keypoints))
+        listH.append(otherH)
+        #print("H:", H)
+
+
+       
+        #Step4: If the number of inliers is sufficiently large, re-compute leastsquares estimate of transformation on all of the inliers
+        if (len(inliers) / len(list_pairs_matched_keypoints) > threshold_ratio_inliers):
+            
+            if (len(inliers) > max_inliers):
+                #print("len inliers:",len(inliers))
+                #print("max_inliers:",max_inliers)
+                max_inliers = len(inliers)
+                A = []
+                for point in inliers:
+                    x = point[0][0]
+                    y = point[0][1]
+                    u = point[1][0]
+                    v = point[1][1]
+
+                    A.append([ x, y, 1, 0, 0, 0, -u*x, -u*y, -u ])
+                    A.append([ 0, 0, 0, x, y, 1, -v*x, -v*y, -v ])
+                A = np.asarray(A)
+                #print(A.shape)
+                #AH=0
+                U,S,V = np.linalg.svd(A)
+                last = V[-1,:]
+                newH = last.reshape(3,3)
+                #print("newH:",newH) 
+           
+                best_H = newH
+                print("bestH:",best_H)
+                if(best_H is None):
+                    print("bestH is none")
+                
+        #print("########################################")
 
     if (best_H is None):
         listH.sort(key = lambda x: x[1])
-        bestH = listH[0][0]
+        print("best_H not found in 1000 trials")
+        best_H = listH[0][0]
 
+    print("bestH:",best_H)
     return best_H
 
 def ex_extract_and_match_feature(img_1, img_2, ratio_robustness=0.7):
@@ -177,11 +209,15 @@ def stitch_images(img_1, img_2):
     # ===== use RANSAC algorithm to find homography to warp image 1 to align it to image 2
     H_1 = ex_find_homography_ransac(list_pairs_matched_keypoints, threshold_ratio_inliers=0.85, threshold_reprojtion_error=3, max_num_trial=1000)
 
+
+#    dst = cv2.warpPerspective(img_1,H_1, (300,300))
+#    plt.subplot(122),plt.imshow(dst),plt.title('Output')
+    
     # ===== warp image 1, blend it with image 2 using average blending to produce the resulting panorama image
     img_panorama = ex_warp_blend_crop_image(img_1=img_1,H_1=H_1, img_2=img_2)
 
-
-    return img_panorama
+    return dst
+    #return img_panorama
 
 if __name__ == "__main__":
     print('==================================================')
@@ -204,5 +240,5 @@ if __name__ == "__main__":
     img_panorama = stitch_images(img_1=img_1, img_2=img_2)
 
     # ===== save panorama image
-    #cv2.imwrite(filename=path_file_image_result, img=(img_panorama).clip(0.0, 255.0).astype(np.uint8))
+    cv2.imwrite(filename=path_file_image_result, img=(img_panorama).clip(0.0, 255.0).astype(np.uint8))
 
