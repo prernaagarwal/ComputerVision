@@ -1,8 +1,12 @@
+# Prerna Agarwal
+# HW#2
+# Worked with Shikha Shah
+
 import cv2 
 import sys
 import numpy as np
 from random import randint
-import matplotlib.pyplot as plt
+
 
 def ex_find_homography_ransac(list_pairs_matched_keypoints, threshold_ratio_inliers=0.85, threshold_reprojtion_error=3, max_num_trial=1000):
     '''
@@ -183,14 +187,58 @@ def ex_warp_blend_crop_image(img_1,H_1,img_2):
     img_panorama = None
     # =====  use a backward warping algorithm to warp the source
     # 1/ to do so, we first create the inverse transform; 2/ use bilinear interpolation for resampling
-    # to be completed ...
+    height, width,channels  = img_1.shape
+    
+    point = [img_1.shape[1], img_1.shape[0], 1]
+    warpShape = np.dot(H_1, point)
+    warpShape = warpShape / warpShape[2]
+    print(warpShape) #[134.21, 141.94, 1]
+    
+    h = int(3*np.floor(warpShape[0]))
+    w = int(3*np.floor(warpShape[1]))
+    print(h,w) #[134.21, 141.94, 1]
 
+    warp = np.zeros((h,w+img_2.shape[1],3))
+    
+    result = np.zeros((h,w+img_2.shape[1]))  
+    print(result.shape)
+
+    for y in range(-100,h):
+        for x in range(-100,w):
+            xy = np.dot(np.linalg.inv(H_1), [x, y, 1])
+            xy = xy/xy[2]
+            xp = int(np.floor(xy[0]))
+            yp = int(np.floor(xy[1]))
+            if yp < result.shape[0] and yp>= 0 and xp < result.shape[1] and xp>=0:    
+                a = xy[0] - xp
+                b = xy[1] - yp
+                if yp+1 < img_1.shape[0]  and xp+1 < img_1.shape[1]:    
+                    bilateral = ( (1-a)*(1-b))*(img_1[yp, xp]) + (a*(1-b))*(img_1[yp, xp+1]) + (a*b)*(img_1[yp+1, xp+1]) + ((1-a)*b)*(img_1[yp+1, xp])
+                    warp[y+50][x+110] = bilateral
+   
+
+    
     # ===== blend images: average blending
-    # to be completed ...
+
+    h2 = img_2.shape[0]
+    w2 = img_2.shape[1]
+    for y in range(h2):
+        for x in range(w2):
+            p2 = img_2[y][x]
+            p1 = warp[y+50][x+110]
+            if (p1[0] == 0 and p1[1] == 0 and p1[2] == 0):
+                warp[y+50][x+110] = img_2[y][x]
+            else:
+                sum = p1+p2
+                avg = [sum[0]/2,sum[1]/2,sum[2]/2]
+                warp[y+50][x+110] = avg
+    
+
+    #cv2.imwrite(filename="3.png", img=(warp).clip(0.0, 255.0).astype(np.uint8))
 
     # ===== find the best bounding box for the resulting stitched image so that it will contain all pixels from 2 original images
-    # to be completed ...
 
+    img_panorama = warp 
     return img_panorama
 
 def stitch_images(img_1, img_2):
@@ -210,14 +258,12 @@ def stitch_images(img_1, img_2):
     H_1 = ex_find_homography_ransac(list_pairs_matched_keypoints, threshold_ratio_inliers=0.85, threshold_reprojtion_error=3, max_num_trial=1000)
 
 
-#    dst = cv2.warpPerspective(img_1,H_1, (300,300))
-#    plt.subplot(122),plt.imshow(dst),plt.title('Output')
+    dst = cv2.warpPerspective(img_1,H_1, (img_1.shape[1] + img_2.shape[1],img_1.shape[0]))
     
     # ===== warp image 1, blend it with image 2 using average blending to produce the resulting panorama image
     img_panorama = ex_warp_blend_crop_image(img_1=img_1,H_1=H_1, img_2=img_2)
 
-    return dst
-    #return img_panorama
+    return img_panorama
 
 if __name__ == "__main__":
     print('==================================================')
@@ -232,10 +278,9 @@ if __name__ == "__main__":
     # ===== read 2 input images
     img_1 = cv2.imread(path_file_image_1)
     img_2 = cv2.imread(path_file_image_2)
+    print(img_1.shape)
+    print(img_2.shape)
     
-    #151,202,3
-    #print("img_1 shape:", img_1.shape)
-    #print("img_2 shape:", img_2.shape)
     # ===== create a panorama image by stitch image 1 to image 2
     img_panorama = stitch_images(img_1=img_1, img_2=img_2)
 
