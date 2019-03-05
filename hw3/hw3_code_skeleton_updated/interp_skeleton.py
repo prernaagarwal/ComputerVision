@@ -57,6 +57,7 @@ def find_holes(flow):
     return holes
 
 
+
 def holefill(flow, holes):
     '''
     fill holes in order: row then column, until fill in all the holes in the flow
@@ -66,21 +67,107 @@ def holefill(flow, holes):
     '''
     h,w,_ = flow.shape
     has_hole=1
-    print(flow[h-1][0])
     while has_hole==1:
-        # to be completed ...
+	foo = 1
         # ===== loop all pixel in x, then in y
         for y in range(0, h):
             for x in range(0,w):
-                # to be completed ...
-                #if (y ==0 and x == 0):
+		avg_u = 0
+		avg_v = 0
+		good_n = 0
+                if (y == 0 and x == 0 and holes[y][x] == 0):   #index 0,0
+			l = []
+			if (holes[y][x+1] == 1):
+				avg_u = avg_u + flow[y][x+1][0]
+				avg_v = avg_v + flow[y][x+1][1]
+				l.append(flow[y][x+1])
+				good_n += 1
+			if (holes[y+1][x] == 1):
+				avg_u = avg_u + flow[y+1][x][0]
+				avg_v = avg_v + flow[y+1][x][1]
+				l.append(flow[y+1][x])
+				good_n += 1				
+			if (holes[y+1][x+1] == 1):
+				avg_u = avg_u + flow[y+1][x+1][0]
+				avg_v = avg_v + flow[y+1][x+1][1]
+				good_n += 1
+				l.append(flow[y+1][x+1])
+			avg_u = avg_u / good_n
+			avg_v = avg_v / good_n
+			if (good_n > 0):
+				foo = 0
+				holes[y][x] = 1
+				flow[y][x] = [avg_u,avg_v] 
+				good_n = 0
 
-                #if (y == 0 and x > 0 and (x < w-1)):
-                #if (y == h-1 and x == 0):
-        
-                #if (holes[y][x])):
+  		if (y == 0 and x == w-1 and holes[y][x] == 0):   #index 0,w-1
+			if (holes[y][x-1] == 1):
+				avg_u = avg_u + flow[y][x-1][0]
+				avg_v = avg_v + flow[y][x-1][1]
+				good_n += 1
+			if (holes[y+1][x] == 1):
+				avg_u = avg_u + flow[y+1][x][0]
+				avg_v = avg_v + flow[y+1][x][1]
+				good_n += 1				
+			if (holes[y+1][x-1] == 1):
+				avg_u = avg_u + flow[y+1][x-1][0]
+				avg_v = avg_v + flow[y+1][x-1][1]
+				good_n += 1
+			avg_u = avg_u / good_n
+			avg_v = avg_v / good_n
+			if (good_n > 0):
+				foo = 0
+				holes[y][x] = 1
+				flow[y][x] = [avg_u,avg_v] 
+				good_n = 0
 
-                foo=1
+  		if (y == h-1 and x == 0 and holes[y][x] == 0):   #index h-1,0
+			if (holes[y][x+1] == 1):
+				avg_u = avg_u + flow[y][x+1][0]
+				avg_v = avg_v + flow[y][x+1][1]
+				good_n += 1
+			if (holes[y-1][x] == 1):
+				avg_u = avg_u + flow[y-1][x][0]
+				avg_v = avg_v + flow[y-1][x][1]
+				good_n += 1				
+			if (holes[y-1][x+1] == 1):
+				avg_u = avg_u + flow[y-1][x+1][0]
+				avg_v = avg_v + flow[y-1][x+1][1]
+				good_n += 1
+			avg_u = avg_u / good_n
+			avg_v = avg_v / good_n
+			if (good_n > 0):
+				foo = 0
+				holes[y][x] = 1
+				flow[y][x] = [avg_u,avg_v] 
+				good_n = 0
+
+  		if (y == h-1 and x == 0 and holes[y][x] == 0):   #index h-1,w-1
+			if (holes[y][x-1] == 1):
+				avg_u = avg_u + flow[y][x-1][0]
+				avg_v = avg_v + flow[y][x-1][1]
+				good_n += 1
+			if (holes[y-1][x] == 1):
+				avg_u = avg_u + flow[y-1][x][0]
+				avg_v = avg_v + flow[y-1][x][1]
+				good_n += 1				
+			if (holes[y-1][x-1] == 1):
+				avg_u = avg_u + flow[y-1][x-1][0]
+				avg_v = avg_v + flow[y-1][x-1][1]
+				good_n += 1
+			avg_u = avg_u / good_n
+			avg_v = avg_v / good_n
+			if (good_n > 0):
+				foo = 0
+				holes[y][x] = 1
+				flow[y][x] = [avg_u,avg_v] 
+				good_n = 0
+
+
+			
+
+			
+                
     return flow
 
 def occlusions(flow0, frame0, frame1):
@@ -299,15 +386,13 @@ if __name__ == "__main__":
     path_file_image_0 = sys.argv[1]
     path_file_image_1 = sys.argv[2]
     path_file_flow    = sys.argv[3]
-    #path_file_image_result = sys.argv[4]
+    path_file_image_result = sys.argv[4]
 
     # ===== read 2 input images and flow
     frame0 = cv2.imread(path_file_image_0)
     frame1 = cv2.imread(path_file_image_1)
     flow0  = readFlowFile(path_file_flow)
-    print(frame0.shape)
-    print(frame1.shape)
-    print(flow0.shape)
+
     # ===== interpolate an intermediate frame at t, t in [0,1]
     frame_t= internp(frame0=frame0, frame1=frame1, t=0.5, flow0=flow0)
-    #cv2.imwrite(filename=path_file_image_result, img=(frame_t * 1.0).clip(0.0, 255.0).astype(np.uint8))
+    cv2.imwrite(filename=path_file_image_result, img=(frame_t * 1.0).clip(0.0, 255.0).astype(np.uint8))
