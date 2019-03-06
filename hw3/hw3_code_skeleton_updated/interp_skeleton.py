@@ -383,25 +383,23 @@ def occlusions(flow0, frame0, frame1):
     # ===== main part of step 5
     # ==================================================
     # to be completed...
-
+    # print(flo1)
     for y in range(0,height):         
         for x in range(0,width):
             locv = flow0[y][x][1] + y
             locu = flow0[y][x][0] + x
             
-            y1 = (int)(np.round(locv))
-            x1 = (int)(np.round(locu))
+            y1 = (int)(np.around(locv))
+            x1 = (int)(np.around(locu))
 
-            if np.isnan(flow1[y][x][0]) or np.isnan(flow1[y][x][1]) or flow1[y][x][0] >= 1e9 or flow1[y][x][1] >= 1e9:
+            if np.isnan(flow1[y][x][0]) or np.isnan(flow1[y][x][1]) or flow1[y][x][0] > 1e9 or flow1[y][x][1] > 1e9:
                 occ1[y][x] = 1
 
             if (y1<0 or y1 >= height or x1<0 or  x1 >= width):  #if out of bounds
                 occ0[y][x] = 1
             else:                                               #if within bounds
-
                 if np.sum(np.abs(np.subtract(flow0[y][x],flow1[y1][x1]))) > 0.5:
                     occ0[y][x] = 1
-
     return occ1,occ0
 
 
@@ -455,7 +453,35 @@ def warpimages(iflow, frame0, frame1, occ0, occ1, t):
     iframe = np.zeros_like(frame0).astype(np.float32)
 
     # to be completed ...
+    
+    h,w,_ = iflow.shape
+    for y in range(h):
+        for x in range(w):
+            locx0 = [y,x] - t * iflow[y][x]
+            locx1 = [y,x] + (1-t) * iflow[y][x] 
+            
+            y0 = int(locx0[0])
+            x0 = int(locx0[1])
+            
+            y1 = int(locx1[0])
+            x1 = int(locx1[1])
 
+            if (y0 < 0 or y0 > frame0.shape[0] or x0 < 0 or x0 > frame0.shape[1]):
+                iframe[y][x] = frame1[y1][x]
+            
+            elif(y1 < 0 or y1 > frame1.shape[0] or x1 < 0 or x1 > frame1.shape[1]):
+                iframe[y][x] = frame0[y0][x0]
+
+            if(occ0[y][x] == 0 and occ1[y][x] ==0):     #blend
+                iframe[y][x] = (1 - t) * frame0[y0][x0] + t * frame1[y1][x1]
+
+            elif(occ1[y][x] == 1 and occ0[y][x] == 0):
+                iframe[y][x] = frame0[y0][x0]
+            elif(occ0[y][x] == 1 and occ1[y][x] == 0):
+                iframe[y][x] = frame1[y1][x1]
+            elif(occ0[y][x] == 1 and occ1[y][x] == 1):
+                iframe[y][x] == frame1[y1][x1]
+    
     return iframe
 
 def blur(im):
