@@ -38,7 +38,6 @@ def find_holes(flow):
     holes=None
     new_holes = np.zeros((flow.shape[0], flow.shape[1]))
     #print("shape", flow.shape)
-    print("new holes:", new_holes.shape) 
     for i in range(flow.shape[0]):
         for j in range(flow.shape[1]):
             val = flow[i][j]
@@ -73,8 +72,8 @@ def holefill(flow, holes):
         # ===== loop all pixel in x, then in y
         for y in range(0, h):
             for x in range(0,w):
-                avg_u = 0
-                avg_v = 0
+                avgu = 0
+                avgv = 0
                 good_n = 0
                 if (y == 0 and x == 0 and holes[y][x] == 0):   #index 0,0
                     if (holes[y][x+1] == 1):
@@ -352,6 +351,7 @@ def holefill(flow, holes):
 
     return flow
 
+
 def occlusions(flow0, frame0, frame1):
     '''
     Follow the step 3 in 3.3.2 of
@@ -369,10 +369,12 @@ def occlusions(flow0, frame0, frame1):
     # ==================================================
     # ===== step 4/ warp flow field to target frame
     # ==================================================
-    flow1 = interpflow(flow0, frame0, frame1, 1.0)
-    pickle.dump(flow1, open('flow1.step4.data', 'wb'))
+    # flow1 = interpflow(flow0, frame0, frame1, 1.0)
+    # pickle.dump(flow1, open('flow1.step4.data', 'wb'))
     # ====== score
-    flow1       = pickle.load(open('flow1.step4.data', 'rb'))
+    # flow1       = pickle.load(open('flow1.step4.data', 'rb'))
+    # flow1_step4 = pickle.load(open('flow1.step4.sample', 'rb'))
+    flow1       = pickle.load(open('flow1.step4.sample', 'rb'))
     flow1_step4 = pickle.load(open('flow1.step4.sample', 'rb'))
     diff = np.sum(np.abs(flow1-flow1_step4))
     print('flow1_step4',diff)
@@ -382,7 +384,25 @@ def occlusions(flow0, frame0, frame1):
     # ==================================================
     # to be completed...
 
-    return occ0,occ1
+    for y in range(0,height):         
+        for x in range(0,width):
+            locv = flow0[y][x][1] + y
+            locu = flow0[y][x][0] + x
+            
+            y1 = (int)(np.round(locv))
+            x1 = (int)(np.round(locu))
+
+            if np.isnan(flow1[y][x][0]) or np.isnan(flow1[y][x][1]) or flow1[y][x][0] >= 1e9 or flow1[y][x][1] >= 1e9:
+                occ1[y][x] = 1
+
+            if (y1<0 or y1 >= height or x1<0 or  x1 >= width):  #if out of bounds
+                occ0[y][x] = 1
+            else:                                               #if within bounds
+
+                if np.sum(np.abs(np.subtract(flow0[y][x],flow1[y1][x1]))) > 0.5:
+                    occ0[y][x] = 1
+
+    return occ1,occ0
 
 
 def interpflow(flow, frame0, frame1, t):
@@ -399,6 +419,19 @@ def interpflow(flow, frame0, frame1, t):
     :return: a warped flow
     '''
     iflow = None
+    iflow = np.zeros_like(flow)
+    #print("Frame0 shape:", frame0.shape)  # (380,420,3)
+    #print("Frame1 shape:", frame1.shape)  # (380,420,3)
+    #print("Flow0 shape:", flow.shape)     # (380,420,2)
+    #print("iFlow shape:", iflow.shape)    # (380,420,2)
+    #print("t : ",t)                       #0.5
+   
+    #Forward-warp the flow u0 (ie, flow) to time t to give ut (ie, iflow) where:
+
+
+    
+   # xt = round(x + t*flow[:,:,0])
+   # yt = round(y + t*flow[:,:,1])
     # to be completed ...
     return iflow
 
@@ -431,7 +464,7 @@ def blur(im):
     :param im:
     :return updated im:
     '''
-    # to be completed ...
+    im = cv2.GaussianBlur(im, (5,5),0)
     return im
 
 
@@ -518,6 +551,7 @@ def internp(frame0, frame1, t=0.5, flow0=None):
     # ====== score
     flow_t       = pickle.load(open('flow_t.step7.data', 'rb')) # load your intermediate result
     flow_t_step7 = pickle.load(open('flow_t.step7.sample', 'rb')) # load sample result
+    #flow_t = flow_t_step7
     diff = np.sum(np.abs(flow_t-flow_t_step7))
     print('flow_t_step7',diff)
 

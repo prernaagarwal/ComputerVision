@@ -50,8 +50,8 @@ def find_holes(flow):
                 new_holes[i][j] = 0 
             else:
                 new_holes[i][j] = 1
-    print("Flow: ",flow)
-    print("New holes: ", new_holes)
+    #print("Flow: ",flow)
+    #print("New holes: ", new_holes)
 
     holes = new_holes
     return holes
@@ -65,111 +65,293 @@ def holefill(flow, holes):
     :param holes: a binary mask that annotate the location of a hole, 0=hole, 1=no hole
     :return: flow: updated flow
     '''
-    h,w,_ = flow.shape
+    h,w,_ = flow.shape #380,420
     has_hole=1
+    #print(flow[0][1]) [u v]
     while has_hole==1:
-	foo = 1
+        foo = 1
         # ===== loop all pixel in x, then in y
         for y in range(0, h):
             for x in range(0,w):
-		avg_u = 0
-		avg_v = 0
-		good_n = 0
+                avg_u = 0
+                avg_v = 0
+                good_n = 0
                 if (y == 0 and x == 0 and holes[y][x] == 0):   #index 0,0
-			l = []
-			if (holes[y][x+1] == 1):
-				avg_u = avg_u + flow[y][x+1][0]
-				avg_v = avg_v + flow[y][x+1][1]
-				l.append(flow[y][x+1])
-				good_n += 1
-			if (holes[y+1][x] == 1):
-				avg_u = avg_u + flow[y+1][x][0]
-				avg_v = avg_v + flow[y+1][x][1]
-				l.append(flow[y+1][x])
-				good_n += 1				
-			if (holes[y+1][x+1] == 1):
-				avg_u = avg_u + flow[y+1][x+1][0]
-				avg_v = avg_v + flow[y+1][x+1][1]
-				good_n += 1
-				l.append(flow[y+1][x+1])
-			avg_u = avg_u / good_n
-			avg_v = avg_v / good_n
-			if (good_n > 0):
-				foo = 0
-				holes[y][x] = 1
-				flow[y][x] = [avg_u,avg_v] 
-				good_n = 0
+                    if (holes[y][x+1] == 1):
+                        avg_u = avg_u + flow[y][x+1][0]
+                        avg_v = avg_v + flow[y][x+1][1]
+                        good_n += 1
+                    if (holes[y+1][x] == 1):
+                        avg_u = avg_u + flow[y+1][x][0]
+                        avg_v = avg_v + flow[y+1][x][1]
+                        good_n += 1				
+                    if (holes[y+1][x+1] == 1):
+                        avg_u = avg_u + flow[y+1][x+1][0]
+                        avg_v = avg_v + flow[y+1][x+1][1]
+                        good_n += 1
+                    if (good_n > 0):
+                        avg_u = avg_u / good_n
+                        avg_v = avg_v / good_n
+                        foo = 0
+                        holes[y][x] = 1
+                        flow[y][x][0] = avgu
+                        flow[y][x][1] = avgv
 
-  		if (y == 0 and x == w-1 and holes[y][x] == 0):   #index 0,w-1
-			if (holes[y][x-1] == 1):
-				avg_u = avg_u + flow[y][x-1][0]
-				avg_v = avg_v + flow[y][x-1][1]
-				good_n += 1
-			if (holes[y+1][x] == 1):
-				avg_u = avg_u + flow[y+1][x][0]
-				avg_v = avg_v + flow[y+1][x][1]
-				good_n += 1				
-			if (holes[y+1][x-1] == 1):
-				avg_u = avg_u + flow[y+1][x-1][0]
-				avg_v = avg_v + flow[y+1][x-1][1]
-				good_n += 1
-			avg_u = avg_u / good_n
-			avg_v = avg_v / good_n
-			if (good_n > 0):
-				foo = 0
-				holes[y][x] = 1
-				flow[y][x] = [avg_u,avg_v] 
-				good_n = 0
-
-  		if (y == h-1 and x == 0 and holes[y][x] == 0):   #index h-1,0
-			if (holes[y][x+1] == 1):
-				avg_u = avg_u + flow[y][x+1][0]
-				avg_v = avg_v + flow[y][x+1][1]
-				good_n += 1
-			if (holes[y-1][x] == 1):
-				avg_u = avg_u + flow[y-1][x][0]
-				avg_v = avg_v + flow[y-1][x][1]
-				good_n += 1				
-			if (holes[y-1][x+1] == 1):
-				avg_u = avg_u + flow[y-1][x+1][0]
-				avg_v = avg_v + flow[y-1][x+1][1]
-				good_n += 1
-			avg_u = avg_u / good_n
-			avg_v = avg_v / good_n
-			if (good_n > 0):
-				foo = 0
-				holes[y][x] = 1
-				flow[y][x] = [avg_u,avg_v] 
-				good_n = 0
-
-  		if (y == h-1 and x == 0 and holes[y][x] == 0):   #index h-1,w-1
-			if (holes[y][x-1] == 1):
-				avg_u = avg_u + flow[y][x-1][0]
-				avg_v = avg_v + flow[y][x-1][1]
-				good_n += 1
-			if (holes[y-1][x] == 1):
-				avg_u = avg_u + flow[y-1][x][0]
-				avg_v = avg_v + flow[y-1][x][1]
-				good_n += 1				
-			if (holes[y-1][x-1] == 1):
-				avg_u = avg_u + flow[y-1][x-1][0]
-				avg_v = avg_v + flow[y-1][x-1][1]
-				good_n += 1
-			avg_u = avg_u / good_n
-			avg_v = avg_v / good_n
-			if (good_n > 0):
-				foo = 0
-				holes[y][x] = 1
-				flow[y][x] = [avg_u,avg_v] 
-				good_n = 0
-
-
-			
-
-			
+                avg_u = 0
+                avg_v = 0
+                good_n = 0 
+                if (y == 0 and x == w-1 and holes[y][x] == 0):   #index 0,w-1
+                    if (holes[y][x-1] == 1):
+                        avg_u = avg_u + flow[y][x-1][0]
+                        avg_v = avg_v + flow[y][x-1][1]
+                        good_n += 1
+                    if (holes[y+1][x] == 1):
+                        avg_u = avg_u + flow[y+1][x][0]
+                        avg_v = avg_v + flow[y+1][x][1]
+                        good_n += 1				
+                    if (holes[y+1][x-1] == 1):
+                        avg_u = avg_u + flow[y+1][x-1][0]
+                        avg_v = avg_v + flow[y+1][x-1][1]
+                        good_n += 1
+                    if (good_n > 0):
+                        avg_u = avg_u / good_n
+                        avg_v = avg_v / good_n
+                        foo = 0
+                        holes[y][x] = 1
+                        flow[y][x][0] = avgu
+                        flow[y][x][1] = avgv
                 
-    return flow
+                avg_u = 0
+                avg_v = 0
+                good_n = 0  
+                if (y == h-1 and x == 0 and holes[y][x] == 0):   #index h-1,0
+                    if (holes[y][x+1] == 1):
+                        avg_u = avg_u + flow[y][x+1][0]
+                        avg_v = avg_v + flow[y][x+1][1]
+                        good_n += 1
+                    if (holes[y-1][x] == 1):
+                        avg_u = avg_u + flow[y-1][x][0]
+                        avg_v = avg_v + flow[y-1][x][1]
+                        good_n += 1				
+                    if (holes[y-1][x+1] == 1):
+                        avg_u = avg_u + flow[y-1][x+1][0]
+                        avg_v = avg_v + flow[y-1][x+1][1]
+                        good_n += 1
+                    if (good_n > 0):
+                        avg_u = avg_u / good_n
+                        avg_v = avg_v / good_n
+                        foo = 0
+                        holes[y][x] = 1
+                        flow[y][x][0] = avgu
+                        flow[y][x][1] = avgv
+                
+                avg_u = 0
+                avg_v = 0
+                good_n = 0 
+                if (y == h-1 and x == w-1 and holes[y][x] == 0):   #index h-1,w-1
+                    if (holes[y][x-1] == 1):
+                        avg_u = avg_u + flow[y][x-1][0]
+                        avg_v = avg_v + flow[y][x-1][1]
+                        good_n += 1
+                    if (holes[y-1][x] == 1):
+                        avg_u = avg_u + flow[y-1][x][0]
+                        avg_v = avg_v + flow[y-1][x][1]
+                        good_n += 1				
+                    if (holes[y-1][x-1] == 1):
+                        avg_u = avg_u + flow[y-1][x-1][0]
+                        avg_v = avg_v + flow[y-1][x-1][1]
+                        good_n += 1
+                    if (good_n > 0):
+                        avg_u = avg_u / good_n
+                        avg_v = avg_v / good_n
+                        foo = 0
+                        holes[y][x] = 1
+                        flow[y][x][0] = avgu
+                        flow[y][x][1] = avgv
 
+
+			
+                avg_u = 0
+                avg_v = 0
+                good_n = 0  
+                if (y == 0 and x > 0 and x < w-1 and holes[y][x] == 0):   #top row
+                    if (holes[y][x-1] == 1):
+                        avg_u = avg_u + flow[y][x-1][0]
+                        avg_v = avg_v + flow[y][x-1][1]
+                        good_n += 1
+                    if (holes[y+1][x-1] == 1):
+                        avg_u = avg_u + flow[y+1][x-1][0]
+                        avg_v = avg_v + flow[y+1][x-1][1]
+                        good_n += 1				
+                    if (holes[y+1][x] == 1):
+                        avg_u = avg_u + flow[y+1][x][0]
+                        avg_v = avg_v + flow[y+1][x][1]
+                        good_n += 1
+                    if (holes[y+1][x+1] == 1):
+                        avg_u = avg_u + flow[y+1][x+1][0]
+                        avg_v = avg_v + flow[y+1][x+1][1]
+                        good_n += 1
+                    if (holes[y][x+1] == 1):
+                        avg_u = avg_u + flow[y][x+1][0]
+                        avg_v = avg_v + flow[y][x+1][1]
+                        good_n += 1				
+                    if (good_n > 0):
+                        avg_u = avg_u / good_n
+                        avg_v = avg_v / good_n
+                        foo = 0
+                        holes[y][x] = 1
+                        flow[y][x][0] = avgu
+                        flow[y][x][1] = avgv
+
+			
+                avg_u = 0
+                avg_v = 0
+                good_n = 0  
+                if (y == h-1 and x > 0 and x < w-1 and holes[y][x] == 0):   #bottom row
+                    if (holes[y][x-1] == 1):
+                        avg_u = avg_u + flow[y][x-1][0]
+                        avg_v = avg_v + flow[y][x-1][1]
+                        good_n += 1
+                    if (holes[y-1][x-1] == 1):
+                        avg_u = avg_u + flow[y-1][x-1][0]
+                        avg_v = avg_v + flow[y-1][x-1][1]
+                        good_n += 1				
+                    if (holes[y-1][x] == 1):
+                        avg_u = avg_u + flow[y-1][x][0]
+                        avg_v = avg_v + flow[y-1][x][1]
+                        good_n += 1
+                    if (holes[y-1][x+1] == 1):
+                        avg_u = avg_u + flow[y-1][x+1][0]
+                        avg_v = avg_v + flow[y-1][x+1][1]
+                        good_n += 1
+                    if (holes[y][x+1] == 1):
+                        avg_u = avg_u + flow[y][x+1][0]
+                        avg_v = avg_v + flow[y][x+1][1]
+                        good_n += 1				
+                    if (good_n > 0):
+                        avg_u = avg_u / good_n
+                        avg_v = avg_v / good_n
+                        foo = 0
+                        holes[y][x] = 1
+                        flow[y][x][0] = avgu
+                        flow[y][x][1] = avgv
+                
+                avg_u = 0
+                avg_v = 0
+                good_n = 0  
+                if (y > 0 and y < h-1 and x == 0 and holes[y][x] == 0):   #leftmost column
+                    if (holes[y-1][x] == 1):
+                        avg_u = avg_u + flow[y-1][x][0]
+                        avg_v = avg_v + flow[y-1][x][1]
+                        good_n += 1
+                    if (holes[y-1][x+1] == 1):
+                        avg_u = avg_u + flow[y-1][x+1][0]
+                        avg_v = avg_v + flow[y-1][x+1][1]
+                        good_n += 1				
+                    if (holes[y][x+1] == 1):
+                        avg_u = avg_u + flow[y][x+1][0]
+                        avg_v = avg_v + flow[y][x+1][1]
+                        good_n += 1
+                    if (holes[y+1][x+1] == 1):
+                        avg_u = avg_u + flow[y+1][x+1][0]
+                        avg_v = avg_v + flow[y+1][x+1][1]
+                        good_n += 1
+                    if (holes[y+1][x] == 1):
+                        avg_u = avg_u + flow[y+1][x][0]
+                        avg_v = avg_v + flow[y+1][x][1]
+                        good_n += 1				
+                    if (good_n > 0):
+                        avg_u = avg_u / good_n
+                        avg_v = avg_v / good_n
+                        foo = 0
+                        holes[y][x] = 1
+                        flow[y][x][0] = avgu
+                        flow[y][x][1] = avgv
+
+
+                avg_u = 0
+                avg_v = 0
+                good_n = 0  
+                if (y > 0 and y < h-1 and x == w-1 and holes[y][x] == 0):   #rightmost column
+                    if (holes[y-1][x] == 1):
+                        avg_u = avg_u + flow[y-1][x][0]
+                        avg_v = avg_v + flow[y-1][x][1]
+                        good_n += 1
+                    if (holes[y-1][x-1] == 1):
+                        avg_u = avg_u + flow[y-1][x-1][0]
+                        avg_v = avg_v + flow[y-1][x-1][1]
+                        good_n += 1				
+                    if (holes[y][x-1] == 1):
+                        avg_u = avg_u + flow[y][x-1][0]
+                        avg_v = avg_v + flow[y][x-1][1]
+                        good_n += 1
+                    if (holes[y+1][x-1] == 1):
+                        avg_u = avg_u + flow[y+1][x-1][0]
+                        avg_v = avg_v + flow[y+1][x-1][1]
+                        good_n += 1
+                    if (holes[y+1][x] == 1):
+                        avg_u = avg_u + flow[y+1][x][0]
+                        avg_v = avg_v + flow[y+1][x][1]
+                        good_n += 1				
+                    if (good_n > 0):
+                        avg_u = avg_u / good_n
+                        avg_v = avg_v / good_n
+                        foo = 0
+                        holes[y][x] = 1
+                        flow[y][x][0] = avgu
+                        flow[y][x][1] = avgv
+
+
+
+                avg_u = 0
+                avg_v = 0
+                good_n = 0  
+                if (y != 0 and y != h-1 and x != 0 and x != w-1 and holes[y][x] == 0):   #any inner cell
+                    if (holes[y-1][x] == 1):
+                        avg_u = avg_u + flow[y-1][x][0]
+                        avg_v = avg_v + flow[y-1][x][1]
+                        good_n += 1
+                    if (holes[y-1][x-1] == 1):
+                        avg_u = avg_u + flow[y-1][x-1][0]
+                        avg_v = avg_v + flow[y-1][x-1][1]
+                        good_n += 1				
+                    if (holes[y][x-1] == 1):
+                        avg_u = avg_u + flow[y][x-1][0]
+                        avg_v = avg_v + flow[y][x-1][1]
+                        good_n += 1
+                    if (holes[y+1][x-1] == 1):
+                        avg_u = avg_u + flow[y+1][x-1][0]
+                        avg_v = avg_v + flow[y+1][x-1][1]
+                        good_n += 1
+                    if (holes[y+1][x] == 1):
+                        avg_u = avg_u + flow[y+1][x][0]
+                        avg_v = avg_v + flow[y+1][x][1]
+                        good_n += 1				
+                    if (holes[y+1][x+1] == 1):
+                        avg_u = avg_u + flow[y+1][x+1][0]
+                        avg_v = avg_v + flow[y+1][x+1][1]
+                        good_n += 1
+                    if (holes[y][x+1] == 1):
+                        avg_u = avg_u + flow[y][x+1][0]
+                        avg_v = avg_v + flow[y][x+1][1]
+                        good_n += 1
+                    if (holes[y-1][x+1] == 1):
+                        avg_u = avg_u + flow[y-1][x+1][0]
+                        avg_v = avg_v + flow[y-1][x+1][1]
+                        good_n += 1				
+                    if (good_n > 0):
+                        avg_u = avg_u / good_n
+                        avg_v = avg_v / good_n
+                        foo = 0
+                        holes[y][x] = 1
+                        flow[y][x][0] = avgu
+                        flow[y][x][1] = avgv
+
+        if (foo == 1):
+            has_hole = 0
+
+    return flow
+"""
 def occlusions(flow0, frame0, frame1):
     '''
     Follow the step 3 in 3.3.2 of
@@ -201,7 +383,65 @@ def occlusions(flow0, frame0, frame1):
     # to be completed...
 
     return occ0,occ1
+"""
+def occlusions(flow0, frame0, frame1):
+    '''
+    Follow the step 3 in 3.3.2 of
+    Simon Baker, Daniel Scharstein, J. P. Lewis, Stefan Roth, Michael J. Black, and Richard Szeliski. A Database and Evaluation Methodology
+    for Optical Flow, International Journal of Computer Vision, 92(1):1-31, March 2011.
+    :param flow0: dense optical flow
+    :param frame0: input image frame 0
+    :param frame1: input image frame 1
+    :return:
+    '''
+    height,width,_ = flow0.shape
+    occ0 = np.zeros([height,width],dtype=np.float32)
+    occ1 = np.zeros([height,width],dtype=np.float32)
 
+    # ==================================================
+    # ===== step 4/ warp flow field to target frame
+    # ==================================================
+    # flow1 = interpflow(flow0, frame0, frame1, 1.0)
+    # pickle.dump(flow1, open('flow1.step4.data', 'wb'))
+    # ====== score
+    # flow1       = pickle.load(open('flow1.step4.data', 'rb'))
+    # flow1_step4 = pickle.load(open('flow1.step4.sample', 'rb'))
+    flow1       = pickle.load(open('flow1.step4.sample', 'rb'))
+    flow1_step4 = pickle.load(open('flow1.step4.sample', 'rb'))
+    diff = np.sum(np.abs(flow1-flow1_step4))
+    print('flow1_step4',diff)
+
+    # ==================================================
+    # ===== main part of step 5
+    # ==================================================
+    # to be completed...
+    location = np.zeros((flow0.shape[0],flow0.shape[1],2),dtype=np.float32)
+    # print(location.shape)
+    for y in range(0,height):         
+        for x in range(0,width):
+            location[y][x][0] = y
+            location[y][x][1] = x
+            l1 = np.zeros([1,1,2],dtype=np.float32)
+            l1[0][0][0] = np.sum(location[y][x][0]+flow0[y][x][1]) #v
+            l1[0][0][1] = np.sum(location[y][x][1]+flow0[y][x][0]) #u
+            values = np.zeros([1,1,2],dtype=np.float32)
+            y1 = (int)(np.round(l1[0][0][0]))
+            # print("y",y,"y1",y1,"location at  y,x",location[y][x])
+            x1 = (int)(np.round(l1[0][0][1]))
+            # print("x",x,"x1",x1)
+            if (y1 >= height or x1 >= width):
+                occ1[y][x] = 1
+            else:
+                # values[0][0][0] = np.absolute(flow0[y][x][0] - flow1[y1][x1][0])
+                # values[0][0][1] = np.absolute(flow0[y][x][1] - flow1[y1][x1][1])
+                # print(values[0][0])
+                # if((values[0][0][0] + values[0][0][1]) > 0.5):
+                #     occ1[y][x] = 1
+                if np.sum(np.abs(flow0[y][x] - flow1[y1][x1])) > 0.5:
+                    occ1[y][x] = 1
+                elif np.isnan(flow1[y1][x1][0]) or np.isnan(flow1[y1][x1][1]) or flow1[y][x][0] >= 1000000000 or flow1[y][x][1] >= 1000000000 :
+                    occ0[y1][x1] = 1
+    return occ0,occ1
 
 def interpflow(flow, frame0, frame1, t):
     '''
@@ -249,7 +489,7 @@ def blur(im):
     :param im:
     :return updated im:
     '''
-    # to be completed ...
+    im = cv2.GaussianBlur(im, (5,5),0)
     return im
 
 
