@@ -386,13 +386,13 @@ def occlusions(flow0, frame0, frame1):
     # print(flo1)
     for y in range(0,height):         
         for x in range(0,width):
-            locu = flow0[y][x][0] + x
             locv = flow0[y][x][1] + y
+            locu = flow0[y][x][0] + x
             
             y1 = (int)(np.around(locv))
             x1 = (int)(np.around(locu))
 
-            if np.isnan(flow1[y][x][0]) or np.isnan(flow1[y][x][1]) or flow1[y][x][0] > 1e9 or flow1[y][x][1] > 1e9 or np.isinf(flow1[y][x][0]) or np.isinf(flow1[y][x][1]):
+            if np.isnan(flow1[y][x][0]) or np.isnan(flow1[y][x][1]) or flow1[y][x][0] > 1e9 or flow1[y][x][1] > 1e9:
                 occ1[y][x] = 1
 
             if (y1<0 or y1 >= height or x1<0 or  x1 >= width):  #if out of bounds
@@ -423,92 +423,13 @@ def interpflow(flow, frame0, frame1, t):
     #print("Flow0 shape:", flow.shape)     # (380,420,2)
     #print("iFlow shape:", iflow.shape)    # (380,420,2)
     #print("t : ",t)                       #0.5
-    l = []
-    for y in range(iflow.shape[0]):
-        l.append([])
-        for x in range(iflow.shape[1]):
-            l[y].append([])
-    #print(len(l), len(l[0]))  #380,420
-    #l[0][0]
-
-    for y in range(iflow.shape[0]):
-        for x in range(iflow.shape[1]):
-            u = flow[y][x][0]
-            v = flow[y][x][1]
-            
-            #if optical flow is not integer, splat it
-            #++
-            u1 = u + 0.5
-            v1 = v + 0.5
-            #--
-            u2 = u - 0.5
-            v2 = v - 0.5
-            #+-
-            u3 = u + 0.5
-            v3 = v - 0.5
-            #-+
-            u4 = u - 0.5
-            v4 = v + 0.5
-
-            
-            y1 = (int)(np.round(x + t * u1))
-            x1 = (int)(np.round(y + t * v1))
-
-            y2 = (int)(np.round(x + t * u2))
-            x2 = (int)(np.round(y + t * v2))
-
-            y3 = (int)(np.round(x + t * u3))
-            x3 = (int)(np.round(y + t * v3))
-            y4 = (int)(np.round(x + t * u4))
-            x4 = (int)(np.round(y + t * v4))
-
-            if (y1 >= 0 and y1 < frame1.shape[0] and x1 >= 0 and x1 < frame1.shape[1]):
-                l[y1][x1].append([y,x])
-
-            if (y2 >= 0 and y2 < frame1.shape[0] and x2 >= 0 and x2 < frame1.shape[1]):
-                l[y2][x2].append([y,x])
-
-            if (y3 >= 0 and y3 < frame1.shape[0] and x3 >= 0 and x3 < frame1.shape[1]):
-                l[y3][x3].append([y,x])
-
-            if (y4 >= 0 and y4 < frame1.shape[0] and x4 >= 0 and x4 < frame1.shape[1]):
-                l[y4][x4].append([y,x])
-
-            """
-            locu = x + t * flow[y][x][0]
-            locv = y + t * flow[y][x][1]
-            y1 = (int)(np.round(locv))
-            x1 = (int)(np.round(locu))
-            if y1 < iflow.shape[0] and x1 < iflow.shape[1]:
-                iflow[y1][x1] = flow[y][x]
-            """
-
-    #check for photo consistency
-    for y1 in range(len(l)):
-        for x1 in range(len(l[0])):
-            listpoints = l[y1][x1]
-            if len(listpoints) > 0:
-                if listpoints.count(listpoints[0]) == len(listpoints):
-                    iflow[y1][x1] = flow[listpoints[0][0]][listpoints[0][1]]
-                else:
-                    lr = 1e25
-                    lg = 1e25
-                    lb = 1e25
-                    low_point = []
-                    for point in listpoints:
-                        r,g,b = frame0[point[0]][point[1]] - frame1[y1][x1]
-                        
-                        #if abs(rgb[0]) < abs(lowest[0]) and abs(rgb[1]) < abs(lowest[1]) and abs(rgb[2]) < abs(lowest[2]):
-                        if abs(r) < abs(lr) and abs(g) < abs(lg) and abs(b) < abs(lb):
-                            lr = r
-                            lg = g
-                            lb = b
-                            low_point = point
-                        
-
-                    iflow[y1][x1] = flow[low_point[0]][low_point[1]]
+   
+    #Forward-warp the flow u0 (ie, flow) to time t to give ut (ie, iflow) where:
 
 
+    
+   # xt = round(x + t*flow[:,:,0])
+   # yt = round(y + t*flow[:,:,1])
     # to be completed ...
     return iflow
 
@@ -532,18 +453,19 @@ def warpimages(iflow, frame0, frame1, occ0, occ1, t):
     iframe = np.zeros_like(frame0).astype(np.float32)
 
     # to be completed ...
+    
     h,w,_ = iframe.shape
     for y in range(h):
         for x in range(w):
             locx0 = [y,x] - t * iflow[y][x]
             locx1 = [y,x] + (1-t) * iflow[y][x] 
             
-            y0 = int(np.round(locx0[0]))
-            x0 = int(np.round(locx0[1]))
+            y0 = int(locx0[0])
+            x0 = int(locx0[1])
             
-            y1 = int(np.round(locx1[0]))
-            x1 = int(np.round(locx1[1]))
-             
+            y1 = int(locx1[0])
+            x1 = int(locx1[1])
+            
             bilinear0 = 0
             a = locx0[0] - y0
             b = locx0[1] - x0
@@ -597,14 +519,13 @@ def warpimages(iflow, frame0, frame1, occ0, occ1, t):
                 iframe[y][x] = (1 - t) * frame0[y0][x0] + t * frame1[y1][x1]
 
             elif(occ1[y][x] == 1 and occ0[y][x] == 0):
-                print(y,x,y0,x0)
                 iframe[y][x] = frame0[y0][x0]
             elif(occ0[y][x] == 1 and occ1[y][x] == 0):
                 iframe[y][x] = frame1[y1][x1]
             elif(occ0[y][x] == 1 and occ1[y][x] == 1):
                 iframe[y][x] == frame1[y1][x1]
             #################################################3
-            """
+            #"""
     return iframe
 
 def blur(im):
