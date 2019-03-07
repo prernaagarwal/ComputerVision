@@ -72,8 +72,8 @@ def holefill(flow, holes):
         # ===== loop all pixel in x, then in y
         for y in range(0, h):
             for x in range(0,w):
-                avgu = 0
-                avgv = 0
+                avg_u = 0
+                avg_v = 0
                 good_n = 0
                 if (y == 0 and x == 0 and holes[y][x] == 0):   #index 0,0
                     if (holes[y][x+1] == 1):
@@ -93,8 +93,8 @@ def holefill(flow, holes):
                         avg_v = avg_v / good_n
                         foo = 0
                         holes[y][x] = 1
-                        flow[y][x][0] = avgu
-                        flow[y][x][1] = avgv
+                        flow[y][x][0] = avg_u
+                        flow[y][x][1] = avg_v
 
                 avg_u = 0
                 avg_v = 0
@@ -117,8 +117,8 @@ def holefill(flow, holes):
                         avg_v = avg_v / good_n
                         foo = 0
                         holes[y][x] = 1
-                        flow[y][x][0] = avgu
-                        flow[y][x][1] = avgv
+                        flow[y][x][0] = avg_u
+                        flow[y][x][1] = avg_v
                 
                 avg_u = 0
                 avg_v = 0
@@ -141,8 +141,8 @@ def holefill(flow, holes):
                         avg_v = avg_v / good_n
                         foo = 0
                         holes[y][x] = 1
-                        flow[y][x][0] = avgu
-                        flow[y][x][1] = avgv
+                        flow[y][x][0] = avg_u
+                        flow[y][x][1] = avg_v
                 
                 avg_u = 0
                 avg_v = 0
@@ -165,8 +165,8 @@ def holefill(flow, holes):
                         avg_v = avg_v / good_n
                         foo = 0
                         holes[y][x] = 1
-                        flow[y][x][0] = avgu
-                        flow[y][x][1] = avgv
+                        flow[y][x][0] = avg_u
+                        flow[y][x][1] = avg_v
 
 
 			
@@ -199,8 +199,8 @@ def holefill(flow, holes):
                         avg_v = avg_v / good_n
                         foo = 0
                         holes[y][x] = 1
-                        flow[y][x][0] = avgu
-                        flow[y][x][1] = avgv
+                        flow[y][x][0] = avg_u
+                        flow[y][x][1] = avg_v
 
 			
                 avg_u = 0
@@ -232,8 +232,8 @@ def holefill(flow, holes):
                         avg_v = avg_v / good_n
                         foo = 0
                         holes[y][x] = 1
-                        flow[y][x][0] = avgu
-                        flow[y][x][1] = avgv
+                        flow[y][x][0] = avg_u
+                        flow[y][x][1] = avg_v
                 
                 avg_u = 0
                 avg_v = 0
@@ -264,8 +264,8 @@ def holefill(flow, holes):
                         avg_v = avg_v / good_n
                         foo = 0
                         holes[y][x] = 1
-                        flow[y][x][0] = avgu
-                        flow[y][x][1] = avgv
+                        flow[y][x][0] = avg_u
+                        flow[y][x][1] = avg_v
 
 
                 avg_u = 0
@@ -297,8 +297,8 @@ def holefill(flow, holes):
                         avg_v = avg_v / good_n
                         foo = 0
                         holes[y][x] = 1
-                        flow[y][x][0] = avgu
-                        flow[y][x][1] = avgv
+                        flow[y][x][0] = avg_u
+                        flow[y][x][1] = avg_v
 
 
 
@@ -343,8 +343,8 @@ def holefill(flow, holes):
                         avg_v = avg_v / good_n
                         foo = 0
                         holes[y][x] = 1
-                        flow[y][x][0] = avgu
-                        flow[y][x][1] = avgv
+                        flow[y][x][0] = avg_u
+                        flow[y][x][1] = avg_v
 
         if (foo == 1):
             has_hole = 0
@@ -418,18 +418,12 @@ def interpflow(flow, frame0, frame1, t):
     '''
     iflow = None
     iflow = np.zeros_like(flow)
-    #print("Frame0 shape:", frame0.shape)  # (380,420,3)
-    #print("Frame1 shape:", frame1.shape)  # (380,420,3)
-    #print("Flow0 shape:", flow.shape)     # (380,420,2)
-    #print("iFlow shape:", iflow.shape)    # (380,420,2)
-    #print("t : ",t)                       #0.5
+
     l = []
     for y in range(iflow.shape[0]):
         l.append([])
         for x in range(iflow.shape[1]):
             l[y].append([])
-    #print(len(l), len(l[0]))  #380,420
-    #l[0][0]
 
     for y in range(iflow.shape[0]):
         for x in range(iflow.shape[1]):
@@ -451,16 +445,16 @@ def interpflow(flow, frame0, frame1, t):
             v4 = v + 0.5
 
             
-            y1 = (int)(np.round(x + t * u1))
-            x1 = (int)(np.round(y + t * v1))
+            y1 = (int)(np.floor(x + t * u1))
+            x1 = (int)(np.floor(y + t * v1))
 
-            y2 = (int)(np.round(x + t * u2))
-            x2 = (int)(np.round(y + t * v2))
+            y2 = (int)(np.floor(x + t * u2))
+            x2 = (int)(np.floor(y + t * v2))
 
-            y3 = (int)(np.round(x + t * u3))
-            x3 = (int)(np.round(y + t * v3))
-            y4 = (int)(np.round(x + t * u4))
-            x4 = (int)(np.round(y + t * v4))
+            y3 = (int)(np.floor(x + t * u3))
+            x3 = (int)(np.floor(y + t * v3))
+            y4 = (int)(np.floor(x + t * u4))
+            x4 = (int)(np.floor(y + t * v4))
 
             if (y1 >= 0 and y1 < frame1.shape[0] and x1 >= 0 and x1 < frame1.shape[1]):
                 l[y1][x1].append([y,x])
@@ -510,6 +504,8 @@ def interpflow(flow, frame0, frame1, t):
 
 
     # to be completed ...
+    if iflow is None:
+        print("NONE")
     return iflow
 
 def warpimages(iflow, frame0, frame1, occ0, occ1, t):
