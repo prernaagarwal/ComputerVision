@@ -389,18 +389,29 @@ def occlusions(flow0, frame0, frame1):
             locu = flow0[y][x][0] + x
             locv = flow0[y][x][1] + y
             
-            y1 = (int)(np.around(locv))
-            x1 = (int)(np.around(locu))
+            y1 = 0
+            x1 = 0 
+            dec_y = locv - int(locv) 
+            dec_x = locu - int(locu) 
+            if dec_y >= 0.5:
+                y1 = int(locv) + 1
+            else:
+                y1 = int(locv)
+            if dec_x >= 0.5:
+                x1 = int(locu) + 1
+            else:
+                x1 = int(locu)
+            
 
             if np.isnan(flow1[y][x][0]) or np.isnan(flow1[y][x][1]) or flow1[y][x][0] > 1e9 or flow1[y][x][1] > 1e9 or np.isinf(flow1[y][x][0]) or np.isinf(flow1[y][x][1]):
-                occ1[y][x] = 1
+                occ0[y][x] = 1
 
             if (y1<0 or y1 >= height or x1<0 or  x1 >= width):  #if out of bounds
-                occ0[y][x] = 1
+                occ1[y][x] = 1
             else:                                               #if within bounds
                 if np.sum(np.abs(np.subtract(flow0[y][x],flow1[y1][x1]))) > 0.5:
-                    occ0[y][x] = 1
-    return occ1,occ0
+                    occ1[y][x] = 1
+    return occ0,occ1
 
 
 def interpflow(flow, frame0, frame1, t):
@@ -723,7 +734,7 @@ def internp(frame0, frame1, t=0.5, flow0=None):
     # ==================================================
     # ===== 9/ inverse-warp frame 0 and frame 1 to the target time t
     # ==================================================
-    frame_t = warpimages(flow_t, frame0, frame1, occ0, occ1, t)
+    frame_t = warpimages(flow_t, frame0, frame1, occ0, occ1_step6, t)
     pickle.dump(frame_t, open('frame_t.step9.data', 'wb')) # save your intermediate result
     # ====== score
     frame_t       = pickle.load(open('frame_t.step9.data', 'rb')) # load your intermediate result
