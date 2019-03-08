@@ -369,13 +369,12 @@ def occlusions(flow0, frame0, frame1):
     # ==================================================
     # ===== step 4/ warp flow field to target frame
     # ==================================================
-    #flow1 = interpflow(flow0, frame0, frame1, 1.0)
-    #pickle.dump(flow1, open('flow1.step4.data', 'wb'))
+    flow1 = interpflow(flow0, frame0, frame1, 1.0)
+    pickle.dump(flow1, open('flow1.step4.data', 'wb'))
     # ====== score
     # flow1       = pickle.load(open('flow1.step4.data', 'rb'))
     # flow1_step4 = pickle.load(open('flow1.step4.sample', 'rb'))
-    flow1       = pickle.load(open('flow1.step4.sample', 'rb'))
-    pickle.dump(flow1, open('flow1.step4.data', 'wb'))
+    flow1       = pickle.load(open('flow1.step4.data', 'rb'))
     flow1_step4 = pickle.load(open('flow1.step4.sample', 'rb'))
     diff = np.sum(np.abs(flow1-flow1_step4))
     print('flow1_step4',diff)
@@ -533,19 +532,6 @@ def myroundfunc(num):
     else:
         return n
 
-def bilinear(frame, x, y):
-    i = int(np.floor(x))
-    j = int(np.floor(y))
-    a = x - i
-    b = y - j
-    if i >= frame.shape[1]-1 or j >= frame.shape[0]-1:
-        #res = frame[frame.shape[0]-1][frame.shape[1]-1]
-        res = frame[j][i]
-    else:
-        res  = ((1-a)*(1-b))*(frame[j,i])+(a*(1-b))*(frame[j,i+1])+(a*b)*(frame[j+1,i+1])+((1-a)*b)*(frame[j+1,i])
-
-    return res
-
 def warpimages(iflow, frame0, frame1, occ0, occ1, t):
     '''
     Compute the colors of the interpolated pixels by inverse-warping frame 0 and frame 1 to the postion t based on the
@@ -580,9 +566,24 @@ def warpimages(iflow, frame0, frame1, occ0, occ1, t):
             y1 = int(myroundfunc(locv1))
             x1 = int(myroundfunc(locu1))
             
-            b0 = bilinear(frame0, locu0, locv0)
-            b1 = bilinear(frame1, locu1, locv1)
-        
+
+
+            """
+            b0 = None
+            a = locv0 - y0
+            b = locu0 - x0
+            if y0 >= frame0.shape[0] -1  and x0 >= frame0.shape[1] -1:
+                b0= frame0[y0][x0]
+            else:
+                b0 = ( (1-a)*(1-b))*(frame0[y0, x0]) + (a*(1-b))*(frame0[y0, x0+1]) + (a*b)*(frame0[y0+1, x0+1]) + ((1-a)*b)*(frame0[y0+1, x0])
+
+            b1 = None
+            a = locv1 - y1
+            b = locu1 - x1
+            if y1 >= frame1.shape[0] - 1  or x1 >= frame1.shape[1] - 1:
+                b1 = frame1[y1][x1]
+            else:
+                b1 = ( (1-a)*(1-b))*(frame1[y1, x1]) + (a*(1-b))*(frame1[y1, x1+1]) + (a*b)*(frame1[y1+1, x1+1]) + ((1-a)*b)*(frame1[y1+1, x1])
 
             if (y0 < 0 or y0 >= frame0.shape[0] or x0 < 0 or x0 >= frame0.shape[1]):
                 iframe[y][x] = b1
@@ -591,23 +592,42 @@ def warpimages(iflow, frame0, frame1, occ0, occ1, t):
             if(y1 < 0 or y1 >= frame1.shape[0] or x1 < 0 or x1 >= frame1.shape[1]):
                 iframe[y][x] = b0
                 continue 
-                
-            #print(occ0[y0][x0], occ1[y1][x1])
-            if occ0[y0][x0] == 0 and occ1[y1][x1] == 0:     #blend
+            
+            if(occ0[y0][x0] == 0 and occ1[y1][x1] == 0):     #blend
                 iframe[y][x] = (1 - t) * b0 + t * b1
 
-            elif occ0[y0][x0] < 0.5 and occ1[y1][x1] < 0.5:     #blend
-                iframe[y][x] = (1 - t) * b0 + t * b1
-
-            elif occ0[y0][x0] > occ1[y1][x1]:
+            elif occ0[y0][x0] == 1 and occ1[y][x] == 0:
                 iframe[y][x] = b1
 
-            elif occ1[y1][x1] > occ0[y0][x0]:
+            elif occ1[y1][x1] == 1 and occ0[y][x] == 0:
                 iframe[y][x] = b0
-
             else:
                 iframe[y][x] = b1
+            """ 
 
+            ########ORIGINAL###########################
+
+            """
+            if (y0 < 0 or y0 >= frame0.shape[0] or x0 < 0 or x0 >= frame0.shape[1]):
+                iframe[y][x] = frame1[y1][x1]
+            
+            elif(y1 < 0 or y1 >= frame1.shape[0] or x1 < 0 or x1 >= frame1.shape[1]):
+                iframe[y][x] = frame0[y0][x0]
+
+            else:
+                if(occ0[y][x] == 0 and occ1[y][x] ==0):     #blend
+                    iframe[y][x] = (1 - t) * frame0[y0][x0] + t * frame1[y1][x1]
+
+                if(occ0[y][x] == 1 and occ1[y][x] == 0):
+                    iframe[y][x] = frame0[y0][x0]
+
+                if(occ1[y][x] == 1 and occ0[y][x] == 0):
+                    #print(y,x,y0,x0)
+                    iframe[y][x] = frame1[y1][x1]
+                if(occ0[y][x] == 1 and occ1[y][x] == 1):
+                    iframe[y][x] == frame1[y1][x1]
+            #################################################3
+            """
     return iframe
 
 def blur(im):
@@ -693,13 +713,11 @@ def internp(frame0, frame1, t=0.5, flow0=None):
     diff = np.sum(np.abs(occ0_step6 - occ0))
     print('occ0_step6',diff)
     diff = np.sum(np.abs(occ1_step6 - occ1))
-    print('occ1_step6',diff)
 
     # ==================================================
     # ===== step 7/ forward-warp the flow to time t to get flow_t
     # ==================================================
     flow_t = interpflow(flow0, frame0, frame1, t)
-    #flow_t = pickle.load(open('flow_t.step7.sample', 'rb')) # load sample result
     pickle.dump(flow_t, open('flow_t.step7.data', 'wb')) # save your intermediate result
     
     # ====== score
@@ -732,8 +750,7 @@ def internp(frame0, frame1, t=0.5, flow0=None):
     # ==================================================
     # ===== 9/ inverse-warp frame 0 and frame 1 to the target time t
     # ==================================================
-    #frame_t = warpimages(flow_t, frame0, frame1, occ0_step6, occ1_step6, t)
-    frame_t = warpimages(flow_t, frame0, frame1, occ0, occ1, t)
+    frame_t = warpimages(flow_t, frame0, frame1, occ0_step6, occ1_step6, t)
     pickle.dump(frame_t, open('frame_t.step9.data', 'wb')) # save your intermediate result
     # ====== score
     frame_t       = pickle.load(open('frame_t.step9.data', 'rb')) # load your intermediate result
