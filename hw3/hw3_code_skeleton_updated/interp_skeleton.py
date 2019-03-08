@@ -41,7 +41,7 @@ def find_holes(flow):
     for i in range(flow.shape[0]):
         for j in range(flow.shape[1]):
             val = flow[i][j]
-            if val[0] > np.power(10,9) or val[1] > np.power(10,9):
+            if val[0] > 1e9 or val[1] > 1e9:
                 new_holes[i][j] = 0
             elif np.isnan(val[0]) or np.isnan(val[1]):
                 new_holes[i][j] = 0
@@ -369,17 +369,24 @@ def occlusions(flow0, frame0, frame1):
     # ==================================================
     # ===== step 4/ warp flow field to target frame
     # ==================================================
-    #flow1 = interpflow(flow0, frame0, frame1, 1.0)
-    #pickle.dump(flow1, open('flow1.step4.data', 'wb'))
-    # ====== score
-    # flow1       = pickle.load(open('flow1.step4.data', 'rb'))
-    # flow1_step4 = pickle.load(open('flow1.step4.sample', 'rb'))
-    flow1       = pickle.load(open('flow1.step4.sample', 'rb'))
+    flow1 = interpflow(flow0, frame0, frame1, 1.0)
     pickle.dump(flow1, open('flow1.step4.data', 'wb'))
+    # ====== score
+    flow1       = pickle.load(open('flow1.step4.data', 'rb'))
     flow1_step4 = pickle.load(open('flow1.step4.sample', 'rb'))
+    #flow1       = pickle.load(open('flow1.step4.data', 'rb'))
+    #pickle.dump(flow1, open('flow1.step4.data', 'wb'))
+    #flow1_step4 = pickle.load(open('flow1.step4.sample', 'rb'))
     diff = np.sum(np.abs(flow1-flow1_step4))
     print('flow1_step4',diff)
 
+
+
+    """
+    for y in range(10):
+        for x in range(5):
+            print([flow1[y][x], flow1_step4[y][x]])
+    """
     # ==================================================
     # ===== main part of step 5
     # ==================================================
@@ -420,6 +427,13 @@ def occlusions(flow0, frame0, frame1):
     return occ0,occ1
 
 
+def myroundfunc(num):
+    n = int(num)
+    if num - n >= 0.5:
+        return n + 1
+    else:
+        return n
+
 def interpflow(flow, frame0, frame1, t):
     '''
     Forward warping flow (from frame0 to frame1) to a position t in the middle of the 2 frames
@@ -447,6 +461,8 @@ def interpflow(flow, frame0, frame1, t):
             u = flow[y][x][0]
             v = flow[y][x][1]
             
+           
+
             #if optical flow is not integer, splat it
             #++
             u1 = u + 0.5
@@ -462,17 +478,17 @@ def interpflow(flow, frame0, frame1, t):
             v4 = v + 0.5
 
             
-            y1 = (int)(np.floor(x + t * u) + 0.5)
-            x1 = (int)(np.floor(y + t * v) + 0.5)
+            x1 = int(myroundfunc(x + t * u1))
+            y1 = int(myroundfunc(y + t * v1))
 
-            y2 = (int)(np.floor(x + t * u) - 0.5)
-            x2 = (int)(np.floor(y + t * v) - 0.5)
+            x2 = int(myroundfunc(x + t * u2))
+            y2 = int(myroundfunc(y + t * v2))
 
-            y3 = (int)(np.floor(x + t * u) + 0.5)
-            x3 = (int)(np.floor(y + t * v) - 0.5)
+            x3 = int(myroundfunc(x + t * u3))
+            y3 = int(myroundfunc(y + t * v3))
 
-            y4 = (int)(np.floor(x + t * u) - 0.5)
-            x4 = (int)(np.floor(y + t * v) + 0.5)
+            x4 = int(myroundfunc(x + t * u4))
+            y4 = int(myroundfunc(y + t * v4))
 
             if (y1 >= 0 and y1 < frame1.shape[0] and x1 >= 0 and x1 < frame1.shape[1]):
                 l[y1][x1].append([y,x])
@@ -486,15 +502,7 @@ def interpflow(flow, frame0, frame1, t):
             if (y4 >= 0 and y4 < frame1.shape[0] and x4 >= 0 and x4 < frame1.shape[1]):
                 l[y4][x4].append([y,x])
 
-            """
-            locu = x + t * flow[y][x][0]
-            locv = y + t * flow[y][x][1]
-            y1 = (int)(np.round(locv))
-            x1 = (int)(np.round(locu))
-            if y1 < iflow.shape[0] and x1 < iflow.shape[1]:
-                iflow[y1][x1] = flow[y][x]
-            """
-
+    
     #check for photo consistency
     for y1 in range(len(l)):
         for x1 in range(len(l[0])):
@@ -503,35 +511,29 @@ def interpflow(flow, frame0, frame1, t):
                 if listpoints.count(listpoints[0]) == len(listpoints):
                     iflow[y1][x1] = flow[listpoints[0][0]][listpoints[0][1]]
                 else:
-                    lr = 1e25
-                    lg = 1e25
-                    lb = 1e25
+                    lr = 1e70
+                    lg = 1e70
+                    lb = 1e70
+                    lowest = np.array([lr,lg,lb])
                     low_point = []
+
                     for point in listpoints:
-                        r,g,b = frame0[point[0]][point[1]] - frame1[y1][x1]
+                        rgb = np.sum(np.absolute(frame0[point[0]][point[1]] - frame1[y1][x1]))
                         
-                        #if abs(rgb[0]) < abs(lowest[0]) and abs(rgb[1]) < abs(lowest[1]) and abs(rgb[2]) < abs(lowest[2]):
-                        if abs(r) < abs(lr) and abs(g) < abs(lg) and abs(b) < abs(lb):
-                            lr = r
-                            lg = g
-                            lb = b
+                        if rgb < np.sum(np.absolute(lowest)):
+                            #lowest = rgb
                             low_point = point
-                        
 
                     iflow[y1][x1] = flow[low_point[0]][low_point[1]]
+            else:
+                iflow[y1][x1] = 1e9
 
-
+    
     # to be completed ...
     if iflow is None:
         print("NONE")
     return iflow
 
-def myroundfunc(num):
-    n = int(num)
-    if num - n >= 0.5:
-        return n + 1
-    else:
-        return n
 
 def bilinear(frame, x, y):
     i = int(np.floor(x))
@@ -539,11 +541,13 @@ def bilinear(frame, x, y):
     a = x - i
     b = y - j
     if i >= frame.shape[1]-1 or j >= frame.shape[0]-1:
-        #res = frame[frame.shape[0]-1][frame.shape[1]-1]
-        res = frame[j][i]
+        res = frame[frame.shape[0]-1][frame.shape[1]-1]
+        #res = frame[j][i]
     else:
-        res  = ((1-a)*(1-b))*(frame[j,i])+(a*(1-b))*(frame[j,i+1])+(a*b)*(frame[j+1,i+1])+((1-a)*b)*(frame[j+1,i])
-
+        if (j >=0 and i >=0):
+            res  = ((1-a)*(1-b))*(frame[j,i])+(a*(1-b))*(frame[j,i+1])+(a*b)*(frame[j+1,i+1])+((1-a)*b)*(frame[j+1,i])
+        else:
+            res = 0
     return res
 
 def warpimages(iflow, frame0, frame1, occ0, occ1, t):
