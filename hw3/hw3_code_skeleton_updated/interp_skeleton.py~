@@ -609,7 +609,6 @@ def bilinear(frame, x, y):
     b = y - j
     if i >= frame.shape[1]-1 or j >= frame.shape[0]-1:
         res = frame[frame.shape[0]-1][frame.shape[1]-1]
-        res = 0
         #res = frame[j][i]
     else:
         if (j >=0 and i >=0):
@@ -639,12 +638,6 @@ def warpimages(iflow, frame0, frame1, occ0, occ1, t):
 
     # to be completed ...
     h,w,_ = iframe.shape
-
-    for y in range(h):
-        for x in range(w):
-            occ0[y][x]  = myroundfunc(occ0[y][x])
-            occ1[y][x]  = myroundfunc(occ1[y][x])
-
     for y in range(h):
         for x in range(w):
             locu0 = x - t * iflow[y][x][0]
@@ -674,15 +667,6 @@ def warpimages(iflow, frame0, frame1, occ0, occ1, t):
             if occ0[y0][x0] == 0 and occ1[y1][x1] == 0:     #blend
                 iframe[y][x] = (1 - t) * b0 + t * b1
 
-            elif occ0[y0][x0] == 1 and  occ1[y1][x1] == 0:
-                iframe[y][x] = b1
-
-            elif occ1[y1][x1] == 1 and  occ0[y0][x0] == 0:
-                iframe[y][x] = b0
-
-            else:
-                iframe[y][x] = b1
-            """
             elif occ0[y0][x0] < 0.5 and occ1[y1][x1] < 0.5:     #blend
                 iframe[y][x] = (1 - t) * b0 + t * b1
 
@@ -694,7 +678,7 @@ def warpimages(iflow, frame0, frame1, occ0, occ1, t):
 
             else:
                 iframe[y][x] = b1
-            """
+
     return iframe
 
 def blur(im):
