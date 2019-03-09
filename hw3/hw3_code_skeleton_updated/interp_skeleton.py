@@ -607,9 +607,9 @@ def bilinear(frame, x, y):
     j = int(np.floor(y))
     a = x - i
     b = y - j
+
     if i >= frame.shape[1]-1 or j >= frame.shape[0]-1:
         res = frame[frame.shape[0]-1][frame.shape[1]-1]
-        res = 0
         #res = frame[j][i]
     else:
         if (j >=0 and i >=0):
@@ -639,11 +639,10 @@ def warpimages(iflow, frame0, frame1, occ0, occ1, t):
 
     # to be completed ...
     h,w,_ = iframe.shape
-
     for y in range(h):
         for x in range(w):
-            occ0[y][x]  = myroundfunc(occ0[y][x])
-            occ1[y][x]  = myroundfunc(occ1[y][x])
+            occ0[y][x]  = np.round(occ0[y][x])
+            occ1[y][x]  = np.round(occ1[y][x])
 
     for y in range(h):
         for x in range(w):
@@ -652,12 +651,11 @@ def warpimages(iflow, frame0, frame1, occ0, occ1, t):
             locu1 = x + (1-t) * iflow[y][x][0] 
             locv1 = y + (1-t) * iflow[y][x][1]
 
-            
-            y0 = int(myroundfunc(locv0))
-            x0 = int(myroundfunc(locu0))
-            y1 = int(myroundfunc(locv1))
-            x1 = int(myroundfunc(locu1))
-            
+            y0 = int(np.round(locv0))
+            x0 = int(np.round(locu0))
+            y1 = int(np.round(locv1))
+            x1 = int(np.round(locu1))
+
             b0 = bilinear(frame0, locu0, locv0)
             b1 = bilinear(frame1, locu1, locv1)
         
@@ -672,7 +670,7 @@ def warpimages(iflow, frame0, frame1, occ0, occ1, t):
                 
             #print(occ0[y0][x0], occ1[y1][x1])
             if occ0[y0][x0] == 0 and occ1[y1][x1] == 0:     #blend
-                iframe[y][x] = (1 - t) * b0 + t * b1
+                iframe[y][x] = (1 - t) * frame0[y0][x0] + t * frame1[y1][x1]
 
             elif occ0[y0][x0] == 1 and  occ1[y1][x1] == 0:
                 iframe[y][x] = b1
@@ -684,7 +682,7 @@ def warpimages(iflow, frame0, frame1, occ0, occ1, t):
                 iframe[y][x] = b1
             """
             elif occ0[y0][x0] < 0.5 and occ1[y1][x1] < 0.5:     #blend
-                iframe[y][x] = (1 - t) * b0 + t * b1
+                iframe[y][x] = (1 - t) * frame0[y0][x0] + t * frame1[y1][x1]
 
             elif occ0[y0][x0] > occ1[y1][x1]:
                 iframe[y][x] = b1
@@ -845,12 +843,12 @@ if __name__ == "__main__":
     path_file_image_1 = sys.argv[2]
     path_file_flow    = sys.argv[3]
     path_file_image_result = sys.argv[4]
-
     # ===== read 2 input images and flow
     frame0 = cv2.imread(path_file_image_0)
     frame1 = cv2.imread(path_file_image_1)
     flow0  = readFlowFile(path_file_flow)
-
+    
     # ===== interpolate an intermediate frame at t, t in [0,1]
     frame_t= internp(frame0=frame0, frame1=frame1, t=0.5, flow0=flow0)
     cv2.imwrite(filename=path_file_image_result, img=(frame_t * 1.0).clip(0.0, 255.0).astype(np.uint8))
+
