@@ -41,7 +41,7 @@ def find_holes(flow):
     for i in range(flow.shape[0]):
         for j in range(flow.shape[1]):
             val = flow[i][j]
-            if val[0] > 1e9 or val[1] > 1e9:
+            if val[0] > 1e10 or val[1] > 1e10:
                 new_holes[i][j] = 0
             elif np.isnan(val[0]) or np.isnan(val[1]):
                 new_holes[i][j] = 0
@@ -352,6 +352,13 @@ def holefill(flow, holes):
     return flow
 
 
+def myroundfunc(num):
+    n = int(num)
+    if num - n >= 0.5:
+        return n + 1
+    else:
+        return n
+
 def occlusions(flow0, frame0, frame1):
     '''
     Follow the step 3 in 3.3.2 of
@@ -382,11 +389,13 @@ def occlusions(flow0, frame0, frame1):
 
 
 
-    """
-    for y in range(10):
-        for x in range(5):
-            print([flow1[y][x], flow1_step4[y][x]])
-    """
+    
+    for y in range(1):
+        for x in range(width):
+            if flow1[y][x][0] != flow1_step4[y][x][0] or flow1[y][x][1] != flow1_step4[y][x][1]:
+                print(y,x)
+                print([flow1[y][x], flow1_step4[y][x]])
+
     # ==================================================
     # ===== main part of step 5
     # ==================================================
@@ -398,7 +407,7 @@ def occlusions(flow0, frame0, frame1):
             locv = flow0[y][x][1] + y
            
             #num is less than 0
-            if np.isnan(flow1[y][x][0]) or np.isnan(flow1[y][x][1]) or flow1[y][x][0] >= 1e9 or flow1[y][x][1] >= 1e9 or np.isinf(flow1[y][x][0]) or np.isinf(flow1[y][x][1]):
+            if np.isnan(flow1[y][x][0]) or np.isnan(flow1[y][x][1]) or flow1[y][x][0] >= 1e10 or flow1[y][x][1] >= 1e10 or np.isinf(flow1[y][x][0]) or np.isinf(flow1[y][x][1]):
                 occ0[y][x] = 1
 
             if (locv <= -1.5 or locv >= height - 0.5 or locu <= -1.5 or  locu >= width -0.5):  #if out of bounds
@@ -411,28 +420,25 @@ def occlusions(flow0, frame0, frame1):
                     y1 = 0
                 if locu < 0:
                     x1 = 0
-
+                
                 #num is greater than 0
                 if locv >= 0:
-                    dec_y = locv - y1 
-                    if dec_y >= 0.5:
-                        y1 = y1 + 1
+                    y1 = myroundfunc(locv)
 
                 if locu >= 0:
-                    dec_x = locu - x1
-                    if dec_x >= 0.5:
-                        x1 = x1 + 1
+                    x1 = myroundfunc(locu)
+                ####
+                if (locv >= height):
+                    y1 = height-1
+                if (locu >= width):
+                    x1 = width-1
+                ####
                 if np.sum(np.abs(flow0[y][x] - flow1[y1][x1])) > 0.5:
                     occ1[y][x] = 1
     return occ0,occ1
 
 
-def myroundfunc(num):
-    n = int(num)
-    if num - n >= 0.5:
-        return n + 1
-    else:
-        return n
+
 
 def interpflow(flow, frame0, frame1, t):
     '''
@@ -507,6 +513,28 @@ def interpflow(flow, frame0, frame1, t):
     for y1 in range(len(l)):
         for x1 in range(len(l[0])):
             listpoints = l[y1][x1]
+            if y1 == 0 and x1 == 33:
+                print("0,33",listpoints)
+                for point in listpoints:
+                    print(frame0[point[0]][point[1]],frame1[y][x])
+                    print(flow[point[0]][point[1]])
+            """
+            if y1 == 0 and x1 == 56:
+                print("0,56",listpoints)
+                for point in listpoints:
+                    print(frame0[point[0]][point[1]], frame1[y][x])
+                    print(flow[point[0]][point[1]])
+            if y1 == 0 and x1 == 101:
+                print("0,101",listpoints)
+                for point in listpoints:
+                    print(frame0[point[0]][point[1]], frame1[y][x])
+                    print(flow[point[0]][point[1]])
+            if y1 == 0 and x1 == 168:
+                print("0,168",listpoints)
+                for point in listpoints:
+                    print(frame0[point[0]][point[1]], frame1[y][x])
+                    print(flow[point[0]][point[1]])
+            """
             if len(listpoints) > 0:
                 if listpoints.count(listpoints[0]) == len(listpoints):
                     iflow[y1][x1] = flow[listpoints[0][0]][listpoints[0][1]]
@@ -519,14 +547,19 @@ def interpflow(flow, frame0, frame1, t):
 
                     for point in listpoints:
                         rgb = np.sum(np.absolute(frame0[point[0]][point[1]] - frame1[y1][x1]))
-                        
+                        rgbarray = frame0[point[0]][point[1]] - frame1[y1][x1]
+                        #print("lowest", lowest)
+                        #print("rgb", rgb)    
+                        #print("rgbarray",rgbarray)
+
                         if rgb < np.sum(np.absolute(lowest)):
-                            #lowest = rgb
+                            #lowest = rgbarray
                             low_point = point
+                            #print(low_point)
 
                     iflow[y1][x1] = flow[low_point[0]][low_point[1]]
             else:
-                iflow[y1][x1] = 1e9
+                iflow[y1][x1] = 1e10
 
     
     # to be completed ...
