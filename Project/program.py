@@ -1,7 +1,12 @@
 #!/usr/bin/python3
+
 # Prerna Agarwal
 # SLIC Project
-# For this assignment, I followed jayrambhia tutorial
+# Introduction to Computer Vision
+# Professor: Feng Liu
+# Portland State University
+# For this assignment, I referred to  
+# jayrambhia tutorial (included in references)
 
 import numpy as np
 import sys
@@ -18,7 +23,7 @@ class SLIC:
         #convert bgr to lab colorspace
         self.labimg = cv2.cvtColor(img, cv2.COLOR_BGR2LAB).astype(np.float64)
         self.K = K #Number of clusters
-        self.N = img.shape[0]*img.shape[1] # Number of pixels
+        self.N = img.shape[0] * img.shape[1] # Number of pixels
         self.S = int(math.sqrt(self.N/self.K)) # distance between centers
         self.m = 10  #recommended by the paper, value can be between 1-20
         self.MAX = np.inf
@@ -46,13 +51,11 @@ class SLIC:
         while i < (self.w - self.S//2):
             j = self.S
             while j < (self.h - self.S//2):
-               
                 x,y = self.getCenter([i, j]) #get x,y
                 l,a,b = self.labimg[y, x]     #get l,a,b
                 center = [l, a, b, x, y]
                 centerList.append(center)
                 j += self.S
-
             i += self.S
 
         return np.array(centerList)
@@ -130,55 +133,70 @@ class SLIC:
                 dist_xy =  np.sqrt(np.square(gridy - y) + np.square(gridx - x))
 
                 #weighted distance
-                dist = np.sqrt(np.square(dist_lab / self.m) + np.square(dist_xy / self.S))
+                newDistance = np.sqrt(np.square(dist_lab / self.m) + np.square(dist_xy / self.S))
 
                 #update the distances
-                newDistance = self.distances[y1:y2, x1:x2]
-                val = dist < newDistance
-                newDistance[val] = dist[val]
-                self.distances[y1:y2, x1:x2] = newDistance
-                self.clusters[y1:y2, x1:x2][val] = num
+                oldDistance = self.distances[y1:y2, x1:x2]
+
+                #get indices where new computed distance for the pixel is less than the
+                #previous distance 
+                compare_index = newDistance < oldDistance
+                #update the old distance indices with new lesser distance
+                oldDistance[compare_index] = newDistance[compare_index]
+                #assign updated distances to 2Sx2S image area considered
+                #in this iteration
+                self.distances[y1:y2, x1:x2] = oldDistance
+                #update the cluster
+                self.clusters[y1:y2, x1:x2][compare_index] = num
         
-            #update the cluster centers
+            #update the cluster centers by taking
+            #average of cluster members
             for c in range(len(self.centers)):
                 val = (self.clusters == c)
-
-                #update lab
+                #sum lab for taking average
                 colr = self.labimg[val]
                 dist1 = mat1[val]
                 self.centers[c][0:3] = np.sum(colr, axis=0)
-                #update xy
+                #sum xy for taking average
                 sumy, sumx = np.sum(dist1, axis = 0)
                 self.centers[c][3:] = sumx, sumy
+                #take average = sum/count
                 self.centers[c] /= np.sum(val)
 
 
 
     #function to display the borders of superpixels.
     def displaySuperpixels(self, color):
+        #combinations around current pixel [j,i]
         X = [-1, -1, 0, 1, 1, 1, 0, -1]
         Y = [0, -1, -1, -1, 0, 1, 1, 1]
 
-        val = np.zeros(self.img.shape[:2], np.bool)
+        #initialized to false by default
+        mat1 = np.zeros((self.img.shape[0], self.img.shape[1]), np.bool)
+        #list to create black superpixel borders
         border = []
 
         for i in range(self.w):
             for j in range(self.h):
                 num = 0
                 for x1, y1 in zip(X, Y):
+                    #pixels surrounding [j,i]
                     x = i + x1
                     y = j + y1
-                    #check within bounds
+                    #check new indices are within bounds
                     if x>=0 and x < self.w and y>=0 and y < self.h:
-                        if val[y, x] == False and self.clusters[j, i] != self.clusters[y, x]:
+                        #check if pixel at [j,i] and [y,x] belong to different clusters
+                        if mat1[y, x] == False and self.clusters[j, i] != self.clusters[y, x]:
                             num += 1
 
+                #add the current pixel to be the border between two clusters
                 if num >= 2:
-                    val[j, i] = True
+                    mat1[j, i] = True
                     border.append([j, i])
 
-        for i in range(len(border)):
-            self.img[border[i][0], border[i][1]] = color
+        #update the color of all the border pixels in img to given color (black)
+        for pixel in border:
+            self.img[pixel[0], pixel[1]] = color
 
 
 if __name__ == "__main__":
@@ -194,5 +212,5 @@ if __name__ == "__main__":
     s.algorithm()
     s.displaySuperpixels(0) #black color
     cv2.imshow("superpixels", s.img)
-    cv2.imwrite("result.jpg", s.img)
+    cv2.imwrite("result1.jpg", s.img)
 
